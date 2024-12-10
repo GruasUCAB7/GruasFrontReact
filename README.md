@@ -33,11 +33,19 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
 **Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-<img width="728" alt="AdminHome" src="https://github.com/user-attachments/assets/55f3c073-ac84-41c6-871f-8aa860dccc89">
+<img width="728" alt="AdminHome" src="https://github.com/user-attachments/assets/8256d506-420b-4dd5-98f1-9371bf5efe40">
 
-<img width="830" alt="AdminUsers" src="https://github.com/user-attachments/assets/47989670-bb50-48c6-ba14-768749dcc490">
+<img width="814" alt="AdminUsers" src="https://github.com/user-attachments/assets/54feb774-87ff-4e8c-b2a0-e5e54a911f3a">
 
-<img width="813" alt="AdminOrders" src="https://github.com/user-attachments/assets/a5bbefff-fa5e-4734-ba77-9d0ace4ab26a">
+<img width="817" alt="AdminOrders" src="https://github.com/user-attachments/assets/955269e4-7e74-49c2-9f6f-1bf9e82fe344">
+
+<img width="815" alt="AdminProviders" src="https://github.com/user-attachments/assets/f107eb50-49e4-478b-a945-a2f9704d8f59">
+
+<img width="813" alt="AdminProfile" src="https://github.com/user-attachments/assets/fb32cd3e-be36-49cd-978a-895049da413f">
+
+<img width="889" alt="AdminProfileEdit" src="https://github.com/user-attachments/assets/dc73c00c-dc95-4f4c-972a-7788433fd84b">
+
+
 
 
 
