@@ -41,6 +41,8 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
 <img width="815" alt="AdminProviders" src="https://github.com/user-attachments/assets/f107eb50-49e4-478b-a945-a2f9704d8f59">
 
+<img width="817" alt="AdminCranesDrivers" src="https://github.com/user-attachments/assets/58690418-72e6-4100-a882-7bbad9ce26e8">
+
 <img width="813" alt="AdminProfile" src="https://github.com/user-attachments/assets/fb32cd3e-be36-49cd-978a-895049da413f">
 
 <img width="889" alt="AdminProfileEdit" src="https://github.com/user-attachments/assets/dc73c00c-dc95-4f4c-972a-7788433fd84b">
