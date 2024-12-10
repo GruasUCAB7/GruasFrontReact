@@ -117,10 +117,11 @@ const AdminUsers = () => {
                   <td className="px-6 py-4 text-gray-700 text-sm">
                     {user.creationDate}
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-6 py-4 text-center flex justify-center gap-4">
+                    {/* Botón Editar */}
                     <button
-                      className="text-blue-500 hover:underline flex items-center gap-2"
                       onClick={() => alert(`Editar usuario: ${user.name}`)}
+                      className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition flex items-center gap-2"
                     >
                       <i className="fas fa-edit"></i> Editar
                     </button>

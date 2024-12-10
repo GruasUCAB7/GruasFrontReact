@@ -56,9 +56,12 @@ const AdminHome = () => {
             <p className="text-gray-600 mt-2 text-center">
               Gestiona la información de tus proveedores.
             </p>
-            <button className="bg-[#00684aff] text-white font-semibold px-4 py-2 rounded-md mt-4 hover:bg-[#07835fff] transition">
+            <Link
+              to="/AdminProviders"
+              className="bg-[#00684aff] text-white font-semibold px-4 py-2 rounded-md mt-4 hover:bg-[#07835fff] transition"
+            >
               Ver Proveedores
-            </button>
+            </Link>
           </div>
 
           <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center">
@@ -69,9 +72,12 @@ const AdminHome = () => {
             <p className="text-gray-600 mt-2 text-center">
               Consulta y actualiza la información de tu perfil.
             </p>
-            <button className="bg-[#00684aff] text-white font-semibold px-4 py-2 rounded-md mt-4 hover:bg-[#07835fff] transition">
+            <Link
+              to="/AdminProfile"
+              className="bg-[#00684aff] text-white font-semibold px-4 py-2 rounded-md mt-4 hover:bg-[#07835fff] transition"
+            >
               Ver Perfil
-            </button>
+            </Link>
           </div>
         </div>
       </div>

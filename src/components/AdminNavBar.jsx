@@ -51,7 +51,7 @@ const AdminNavbar = () => {
 
           <li>
             <Link
-              to="/admin/proveedores"
+              to="/AdminProviders"
               className="navbar-link bg-[#00684aff] text-cyan-50 font-semibold w-full h-14 flex items-center justify-center rounded-md shadow-lg hover:bg-[#07835fff] hover:shadow-xl transition-all"
             >
               <div className="px-4 py-2 text-white">Proveedores</div>
@@ -60,7 +60,7 @@ const AdminNavbar = () => {
 
           <li>
             <Link
-              to="/admin/perfil"
+              to="/AdminProfile"
               className="navbar-link bg-[#00684aff] text-cyan-50 font-semibold w-full h-14 flex items-center justify-center rounded-md shadow-lg hover:bg-[#07835fff] hover:shadow-xl transition-all"
             >
               <div className="px-4 py-2 text-white">Perfil</div>

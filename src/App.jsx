@@ -4,6 +4,9 @@ import './index.css';
 import AdminHome from './pages/Admin/AdminHome';
 import AdminUsers from './pages/Admin/AdminUsers';
 import AdminOrders from './pages/Admin/AdminOrders';
+import AdminProviders from './pages/Admin/AdminProviders';
+import AdminCranes from './pages/Admin/AdminCranes';
+import AdminProfile from  './pages/Admin/AdminProfile';
 
 const App = () => {
     return (
@@ -13,6 +16,9 @@ const App = () => {
                 <Route path="/AdminHome" element={<AdminHome />} />
                 <Route path="/AdminUsers" element={<AdminUsers />} />
                 <Route path="/AdminOrders" element={<AdminOrders />} />
+                <Route path="/AdminProviders" element={<AdminProviders />} />
+                <Route path="/AdminCranes" element={<AdminCranes />} />
+                <Route path="/AdminProfile" element={<AdminProfile />} />
             </Routes>
         </Router>
     );

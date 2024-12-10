@@ -6,7 +6,7 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState([
     {
       id: 1,
-      clientId: "123",
+      clientId: "1",
       dni: "V-12345678",
       name: "Juan",
       email: "juan@email.com",
@@ -15,7 +15,7 @@ const AdminOrders = () => {
     },
     {
       id: 2,
-      clientId: "124",
+      clientId: "2",
       dni: "V-87654321",
       name: "María",
       email: "maria@email.com",
@@ -113,10 +113,11 @@ const AdminOrders = () => {
                   >
                     {order.status}
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-6 py-4 text-center flex justify-center gap-4">
+                    {/* Botón Editar */}
                     <button
-                      className="text-blue-500 hover:underline flex items-center gap-2"
                       onClick={() => alert(`Editar orden: ${order.id}`)}
+                      className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition flex items-center gap-2"
                     >
                       <i className="fas fa-edit"></i> Editar
                     </button>
