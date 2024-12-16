@@ -39,6 +39,10 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
 <img width="817" alt="AdminOrders" src="https://github.com/user-attachments/assets/955269e4-7e74-49c2-9f6f-1bf9e82fe344">
 
+<img width="470" alt="AdminAddOrdenFormAPIGoogleMaps" src="https://github.com/user-attachments/assets/0a052430-4797-464b-8469-346d35dd7821" />
+
+<img width="473" alt="AdminAddOrdenFormAPIGoogleMaps1" src="https://github.com/user-attachments/assets/77ad10dd-555b-44bb-8fcd-7fa50e09c11f" />
+
 <img width="815" alt="AdminProviders" src="https://github.com/user-attachments/assets/f107eb50-49e4-478b-a945-a2f9704d8f59">
 
 <img width="817" alt="AdminCranesDrivers" src="https://github.com/user-attachments/assets/58690418-72e6-4100-a882-7bbad9ce26e8">
