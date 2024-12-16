@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import AdminNavbar from "../../components/AdminNavBar";
-import AdminAddProviderForm from "../../components/AdminAddProviderForm";
+import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
+import AdminAddProviderForm from "../../components/AdminComponents/AdminAddProviderForm";
 import { useNavigate } from "react-router-dom";
 
 const AdminProviders = () => {
@@ -48,7 +48,7 @@ const AdminProviders = () => {
   return (
     <div className="flex">
       <AdminNavbar />
-      <div className="flex-1 bg-gray-100 p-8">
+      <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Proveedores</h1>
           <p className="text-lg text-gray-600 mt-2">
@@ -97,15 +97,12 @@ const AdminProviders = () => {
                   <td className="px-6 py-4 text-gray-700 text-sm">{provider.phone}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{provider.entryDate}</td>
                   <td className="px-6 py-4 text-center flex justify-center gap-4">
-                    {/* Botón Ver Detalles */}
                     <button
                       onClick={() => navigate(`/AdminCranes?providerId=${provider.id}`)}
                       className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
                     >
                       Ver Detalles
                     </button>
-
-                    {/* Botón Editar */}
                     <button
                       onClick={() => {
                         setSelectedProvider(provider);

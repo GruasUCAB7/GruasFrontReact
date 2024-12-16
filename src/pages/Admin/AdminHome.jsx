@@ -1,13 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import AdminNavbar from "../../components/AdminNavBar";
+import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 
 const AdminHome = () => {
   return (
     <div className="flex">
       <AdminNavbar />
 
-      <div className="flex-1 bg-gray-100 p-8">
+      <div className="flex-1 ml-60 p-8 bg-gray-100">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Bienvenido, Administrador</h1>
           <p className="text-lg text-gray-600 mt-2">

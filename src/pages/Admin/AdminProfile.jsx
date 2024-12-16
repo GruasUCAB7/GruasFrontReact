@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import AdminNavbar from "../../components/AdminNavBar";
+import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 
 const AdminProfile = () => {
   const [adminData, setAdminData] = useState({
@@ -10,12 +10,13 @@ const AdminProfile = () => {
     role: "Administrador",
     department: "TI",
     creationDate: "01/01/2023",
-    profilePicture:
-      "https://via.placeholder.com/150",
+    profilePicture: "https://via.placeholder.com/150",
+    password: "********",
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(adminData);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleEdit = () => setIsEditing(true);
   const handleSave = () => {
@@ -28,11 +29,19 @@ const AdminProfile = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handlePasswordChange = () => {
+    alert("Cambiar contraseña no está implementado aún.");
+  };
+
   return (
     <div className="flex">
       <AdminNavbar />
 
-      <div className="flex-1 bg-gray-50 p-8">
+      <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
         <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-lg p-8">
           <div className="relative flex flex-col items-center mb-6">
             <div className="relative w-32 h-32">
@@ -58,19 +67,19 @@ const AdminProfile = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
                 Información General
               </h2>
-              <div>
+              <div className="flex justify-between items-center">
                 <p className="text-gray-700 font-medium">Email:</p>
                 <p className="text-gray-500">{adminData.email}</p>
               </div>
-              <div>
+              <div className="flex justify-between items-center">
                 <p className="text-gray-700 font-medium">Teléfono:</p>
                 <p className="text-gray-500">{adminData.phone}</p>
               </div>
-              <div>
+              <div className="flex justify-between items-center">
                 <p className="text-gray-700 font-medium">Departamento:</p>
                 <p className="text-gray-500">{adminData.department}</p>
               </div>
-              <div>
+              <div className="flex justify-between items-center">
                 <p className="text-gray-700 font-medium">Fecha de Creación:</p>
                 <p className="text-gray-500">{adminData.creationDate}</p>
               </div>
@@ -131,7 +140,33 @@ const AdminProfile = () => {
             )}
           </div>
 
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
+              Seguridad
+            </h2>
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-gray-700 font-medium">Contraseña:</p>
+              <div className="flex items-center space-x-4">
+                <p className="text-gray-500">
+                  {showPassword ? "12345678" : "********"}
+                </p>
+                <button
+                  onClick={togglePasswordVisibility}
+                  className="bg-gray-300 text-gray-800 px-2 py-1 rounded-md hover:bg-gray-400 transition"
+                >
+                  {showPassword ? "Ocultar" : "Mostrar"}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-8 flex justify-end space-x-4">
+            <button
+              onClick={handlePasswordChange}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+            >
+              Cambiar Contraseña
+            </button>
             {isEditing ? (
               <>
                 <button

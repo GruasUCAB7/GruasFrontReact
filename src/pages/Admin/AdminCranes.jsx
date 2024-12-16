@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import AdminNavbar from "../../components/AdminNavBar";
-import AdminAddCraneForm from "../../components/AdminAddCraneForm";
-import AdminAddDriverForm from "../../components/AdminAddDriverForm";
+import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
+import AdminAddCraneForm from "../../components/AdminComponents/AdminAddCraneForm";
+import AdminAddDriverForm from "../../components/AdminComponents/AdminAddDriverForm";
 import { useSearchParams } from "react-router-dom";
 
 const AdminCranes = () => {
@@ -98,7 +98,7 @@ const AdminCranes = () => {
   return (
     <div className="flex">
       <AdminNavbar />
-      <div className="flex-1 bg-gray-100 p-8">
+      <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">
           Grúas y Conductores del Proveedor (ID: {providerId})
         </h1>

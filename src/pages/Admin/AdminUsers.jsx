@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import AdminNavbar from "../../components/AdminNavBar";
-import AdminAddUserForm from "../../components/AdminAddUserForm";
+import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
+import AdminAddUserForm from "../../components/AdminComponents/AdminAddUserForm";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([
@@ -46,7 +46,7 @@ const AdminUsers = () => {
     <div className="flex">
       <AdminNavbar />
 
-      <div className="flex-1 bg-gray-100 p-8">
+      <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
           <p className="text-lg text-gray-600 mt-2">

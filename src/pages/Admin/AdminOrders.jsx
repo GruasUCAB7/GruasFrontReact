@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import AdminNavbar from "../../components/AdminNavBar";
-import AdminAddOrderForm from "../../components/AdminAddOrderForm";
+import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
+import AdminAddOrderForm from "../../components/AdminComponents/AdminAddOrderForm";
+import AdminEditOrderStatusForm from "../../components/AdminComponents/AdminEditOrderStatusForm";
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([
@@ -12,6 +13,12 @@ const AdminOrders = () => {
       email: "juan@email.com",
       phone: "+58 4121512539",
       status: "Pendiente",
+      driver: "Conductor 1",
+      journey: {
+        origin: "Altamira, Caracas",
+        destination: "Chacao, Caracas",
+        directionsResponse: null,
+      },
     },
     {
       id: 2,
@@ -21,12 +28,20 @@ const AdminOrders = () => {
       email: "maria@email.com",
       phone: "+58 4121512539",
       status: "Completada",
+      driver: "Conductor 2",
+      journey: {
+        origin: "La Castellana, Caracas",
+        destination: "El Rosal, Caracas",
+        directionsResponse: null,
+      },
     },
   ]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showEditStatusForm, setShowEditStatusForm] = useState(false);
 
   const filteredOrders = orders.filter((order) => {
     return (
@@ -38,14 +53,32 @@ const AdminOrders = () => {
   });
 
   const handleAddOrder = (newOrder) => {
-    setOrders([...orders, { ...newOrder, id: orders.length + 1 }]);
+    const defaultJourney = {
+      origin: "Origen no definido",
+      destination: "Destino no definido",
+      directionsResponse: null,
+    };
+
+    setOrders([
+      ...orders,
+      { ...newOrder, id: orders.length + 1, journey: newOrder.journey || defaultJourney },
+    ]);
+  };
+
+  const handleEditStatus = (orderId, newStatus) => {
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+    setShowEditStatusForm(false);
   };
 
   return (
     <div className="flex">
       <AdminNavbar />
 
-      <div className="flex-1 bg-gray-100 p-8">
+      <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Órdenes</h1>
           <p className="text-lg text-gray-600 mt-2">
@@ -90,6 +123,8 @@ const AdminOrders = () => {
                 <th className="px-6 py-3 text-left font-medium text-sm">Nombre</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Email</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Teléfono</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Conductor</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Viaje</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Status</th>
                 <th className="px-6 py-3 text-center font-medium text-sm">Acciones</th>
               </tr>
@@ -102,6 +137,10 @@ const AdminOrders = () => {
                   <td className="px-6 py-4 text-gray-700 text-sm">{order.name}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{order.email}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{order.phone}</td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{order.driver}</td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">
+                    {order.journey.origin} - {order.journey.destination}
+                  </td>
                   <td
                     className={`px-6 py-4 font-semibold text-sm ${
                       order.status === "Pendiente"
@@ -114,7 +153,15 @@ const AdminOrders = () => {
                     {order.status}
                   </td>
                   <td className="px-6 py-4 text-center flex justify-center gap-4">
-                    {/* Botón Editar */}
+                    <button
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        setShowEditStatusForm(true);
+                      }}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition flex items-center gap-2"
+                    >
+                      <i className="fas fa-sync-alt"></i> Status
+                    </button>
                     <button
                       onClick={() => alert(`Editar orden: ${order.id}`)}
                       className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition flex items-center gap-2"
@@ -132,6 +179,14 @@ const AdminOrders = () => {
           <AdminAddOrderForm
             onClose={() => setShowAddForm(false)}
             onAddOrder={handleAddOrder}
+          />
+        )}
+
+        {showEditStatusForm && selectedOrder && (
+          <AdminEditOrderStatusForm
+            order={selectedOrder}
+            onClose={() => setShowEditStatusForm(false)}
+            onSave={handleEditStatus}
           />
         )}
       </div>

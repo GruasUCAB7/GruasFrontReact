@@ -1,8 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "../index.css";
+import "../../index.css";
 
-import LogoGruasUcab from "../static/img/LogoGruasUcab.jpg";
+import LogoGruasUcab from "../../static/img/LogoGruasUcab.jpg";
 
 const AdminNavbar = () => {
   const handleLogout = () => {
@@ -10,17 +10,23 @@ const AdminNavbar = () => {
   };
 
   return (
-    <div className="navbar bg-[#023430ff] h-screen w-60 text-white p-4 flex flex-col justify-between">
+    <div className="navbar bg-[#023430ff] fixed top-0 left-0 h-screen w-60 text-white p-4 flex flex-col justify-between">
       <div>
-        <Link to="/admin/AdminHome" className="flex items-center space-x-4 mb-8">
+        <Link
+          to="/AdminHome"
+          className="flex items-center space-x-4 mb-8"
+        >
           <img
             src={LogoGruasUcab}
             alt="Logo Gruas"
-            className="w-20 h-20 rounded-full"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full"
           />
-          <span className="text-white text-xl font-bold">GruasUCAB</span>
+          <span className="text-white text-lg sm:text-xl font-bold">
+            GruasUCAB
+          </span>
         </Link>
 
+        {/* Menú de navegación */}
         <ul className="navbar-menu flex flex-col space-y-4">
           <li>
             <Link
