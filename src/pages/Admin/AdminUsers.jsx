@@ -1,34 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "../../axiosInstance";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import AdminAddUserForm from "../../components/AdminComponents/AdminAddUserForm";
+import AdminUpdateUserForm from "../../components/AdminComponents/AdminUpdateUserForm";
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Juan",
-      email: "juan@email.com",
-      phone: "+58 4121512539",
-      type: "Operador",
-      status: "Activo",
-      department: "Departamento",
-      creationDate: "01/01/2023",
-    },
-    {
-      id: 2,
-      name: "María",
-      email: "maria@email.com",
-      phone: "+58 4121512539",
-      type: "Administrador",
-      status: "Inactivo",
-      department: "TI",
-      creationDate: "15/03/2023",
-    },
-  ]);
-
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [alertMessage, setAlertMessage] = useState(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get("/user-api/user");
+        const formattedUsers = response.data.map((user) => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          type: user.userType,
+          status: user.isActive ? "Activo" : "Inactivo",
+          department: user.department,
+        }));
+        setUsers(formattedUsers);
+      } catch (error) {
+        console.error("Error al obtener la lista de usuarios:", error.message);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter((user) => {
     return (
@@ -42,11 +46,32 @@ const AdminUsers = () => {
     setUsers([...users, { ...newUser, id: users.length + 1 }]);
   };
 
+  const handleUpdateUser = (updatedUser) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
+    );
+    setAlertMessage({ type: "success", text: "Usuario actualizado correctamente." });
+  };
+
+  const handleError = (message) => {
+    setAlertMessage({ type: "error", text: message });
+  };
+
   return (
     <div className="flex">
       <AdminNavbar />
 
       <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
+        {alertMessage && (
+          <div
+            className={`p-4 mb-4 rounded-lg text-white ${
+              alertMessage.type === "success" ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
+            {alertMessage.text}
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
           <p className="text-lg text-gray-600 mt-2">
@@ -62,7 +87,6 @@ const AdminUsers = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-1/3 p-2 border rounded-md"
           />
-
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -72,9 +96,8 @@ const AdminUsers = () => {
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
           </select>
-
           <button
-            className="bg-[#00684aff] text-white px-4 py-2 rounded-md shadow-lg hover:bg-[#07835fff] transition"
+            className="bg-[#00684aff] text-white px-4 py-2 rounded-md hover:bg-[#07835fff] transition"
             onClick={() => setShowAddForm(true)}
           >
             Agregar Usuario
@@ -85,21 +108,18 @@ const AdminUsers = () => {
           <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-lg">
             <thead className="bg-[#00684aff] text-white">
               <tr>
-                <th className="px-6 py-3 text-left font-medium text-sm">ID</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Nombre</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Email</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Teléfono</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Tipo</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Status</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Departamento</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Fecha Creación</th>
                 <th className="px-6 py-3 text-center font-medium text-sm">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="border-b">
-                  <td className="px-6 py-4 text-gray-700 text-sm">{user.id}</td>
+                <tr key={user.id} className="border-b hover:bg-gray-50">
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.name}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.email}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.phone}</td>
@@ -111,16 +131,13 @@ const AdminUsers = () => {
                   >
                     {user.status}
                   </td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">
-                    {user.department}
-                  </td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">
-                    {user.creationDate}
-                  </td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{user.department}</td>
                   <td className="px-6 py-4 text-center flex justify-center gap-4">
-                    {/* Botón Editar */}
                     <button
-                      onClick={() => alert(`Editar usuario: ${user.name}`)}
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setShowEditForm(true);
+                      }}
                       className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition flex items-center gap-2"
                     >
                       <i className="fas fa-edit"></i> Editar
@@ -136,6 +153,15 @@ const AdminUsers = () => {
           <AdminAddUserForm
             onClose={() => setShowAddForm(false)}
             onAddUser={handleAddUser}
+          />
+        )}
+
+        {showEditForm && selectedUser && (
+          <AdminUpdateUserForm
+            user={selectedUser}
+            onClose={() => setShowEditForm(false)}
+            onUpdateSuccess={handleUpdateUser}
+            onError={handleError}
           />
         )}
       </div>

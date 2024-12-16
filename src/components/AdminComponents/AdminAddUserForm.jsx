@@ -1,31 +1,74 @@
 import React, { useState } from "react";
+import axios from "../../axiosInstance";
 
 const AdminAddUserForm = ({ onClose, onAddUser }) => {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         phone: "",
-        type: "Usuario",
-        status: "Activo",
+        userType: "Operator",
+        isActive: true,
         department: "",
-        creationDate: new Date().toISOString().split("T")[0],
     });
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+
+        const newValue = name === "isActive" ? value === "true" : value;
+
+        setFormData({
+            ...formData,
+            [name]: newValue,
+        });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onAddUser(formData);
-        onClose();
+        setIsLoading(true);
+        setErrorMessage("");
+
+        const payload = {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            userType: formData.userType,
+            isActive: formData.isActive,
+            department: formData.department,
+        };
+
+        try {
+            const response = await axios.post("/user-api/user", payload);
+
+            if (response.status === 200 || response.status === 201) {
+                onAddUser(response.data);
+                onClose();
+            }
+        } catch (error) {
+            console.error("Error al agregar usuario:", error);
+            if (error.response) {
+                setErrorMessage(
+                    `Error ${error.response.status}: ${error.response.data?.message || "Error al guardar el usuario"}`
+                );
+            } else {
+                setErrorMessage("Error de red: No se pudo conectar al servidor.");
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Agregar Usuario</h2>
+                <h2 className="text-2xl font-bold mb-4">Agregar Usuario</h2>
+
+                {errorMessage && (
+                    <div className="mb-4 text-red-500 text-sm">{errorMessage}</div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-gray-700 font-medium">Nombre</label>
@@ -66,26 +109,29 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
                     <div>
                         <label className="block text-gray-700 font-medium">Tipo de Usuario</label>
                         <select
-                            name="type"
-                            value={formData.type}
+                            name="userType"
+                            value={formData.userType}
                             onChange={handleChange}
+                            required
                             className="w-full p-2 border rounded-md"
                         >
-                            <option value="Usuario">Usuario</option>
-                            <option value="Administrador">Administrador</option>
+                            <option value="Operator">Operator</option>
+                            <option value="Provider">Provider</option>
+                            <option value="Driver">Driver</option>
                         </select>
                     </div>
 
                     <div>
-                        <label className="block text-gray-700 font-medium">Estado</label>
+                        <label className="block text-gray-700 font-medium">Activo</label>
                         <select
-                            name="status"
-                            value={formData.status}
+                            name="isActive"
+                            value={formData.isActive.toString()}
                             onChange={handleChange}
+                            required
                             className="w-full p-2 border rounded-md"
                         >
-                            <option value="Activo">Activo</option>
-                            <option value="Inactivo">Inactivo</option>
+                            <option value="true">Sí</option>
+                            <option value="false">No</option>
                         </select>
                     </div>
 
@@ -97,18 +143,7 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
                             value={formData.department}
                             onChange={handleChange}
                             required
-                            className="w-full p-2 border rounded-md"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-gray-700 font-medium">Fecha de Creación</label>
-                        <input
-                            type="date"
-                            name="creationDate"
-                            value={formData.creationDate}
-                            onChange={handleChange}
-                            required
+                            placeholder="UUID del departamento"
                             className="w-full p-2 border rounded-md"
                         />
                     </div>
@@ -123,9 +158,10 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
                         </button>
                         <button
                             type="submit"
+                            disabled={isLoading}
                             className="px-4 py-2 bg-[#00684aff] text-white rounded-md hover:bg-[#07835fff] transition"
                         >
-                            Guardar
+                            {isLoading ? "Guardando..." : "Guardar"}
                         </button>
                     </div>
                 </form>
