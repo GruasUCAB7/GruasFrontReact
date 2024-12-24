@@ -6,7 +6,9 @@ import AdminUsers from './pages/Admin/AdminUsers';
 import AdminOrders from './pages/Admin/AdminOrders';
 import AdminProviders from './pages/Admin/AdminProviders';
 import AdminCranes from './pages/Admin/AdminCranes';
+import AdminContracts from './pages/Admin/AdminContracts';
 import AdminProfile from  './pages/Admin/AdminProfile';
+import AdminContractDetail from './components/AdminComponents/AdminContractDetail';
 
 const App = () => {
     return (
@@ -18,7 +20,10 @@ const App = () => {
                 <Route path="/AdminOrders" element={<AdminOrders />} />
                 <Route path="/AdminProviders" element={<AdminProviders />} />
                 <Route path="/AdminCranes" element={<AdminCranes />} />
+                <Route path="/AdminContracts" element={<AdminContracts />} />
+                <Route path="/AdminContractDetail/:id" element={<AdminContractDetail />} />
                 <Route path="/AdminProfile" element={<AdminProfile />} />
+
             </Routes>
         </Router>
     );

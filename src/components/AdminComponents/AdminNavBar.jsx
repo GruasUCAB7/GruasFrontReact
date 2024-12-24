@@ -26,7 +26,6 @@ const AdminNavbar = () => {
           </span>
         </Link>
 
-        {/* Menú de navegación */}
         <ul className="navbar-menu flex flex-col space-y-4">
           <li>
             <Link
@@ -61,6 +60,15 @@ const AdminNavbar = () => {
               className="navbar-link bg-[#00684aff] text-cyan-50 font-semibold w-full h-14 flex items-center justify-center rounded-md shadow-lg hover:bg-[#07835fff] hover:shadow-xl transition-all"
             >
               <div className="px-4 py-2 text-white">Proveedores</div>
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              to="/AdminContracts"
+              className="navbar-link bg-[#00684aff] text-cyan-50 font-semibold w-full h-14 flex items-center justify-center rounded-md shadow-lg hover:bg-[#07835fff] hover:shadow-xl transition-all"
+            >
+              <div className="px-4 py-2 text-white">Contratos</div>
             </Link>
           </li>
 

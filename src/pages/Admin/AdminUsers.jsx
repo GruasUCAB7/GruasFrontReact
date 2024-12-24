@@ -9,75 +9,96 @@ const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [alertMessage, setAlertMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get("/user-api/user");
+      const formattedUsers = response.data.map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        type: user.userType,
+        status: user.isActive ? "Activo" : "Inactivo",
+        department: user.department,
+      }));
+      setUsers(formattedUsers);
+    } catch (error) {
+      console.error("Error al obtener la lista de usuarios:", error.message);
+      setErrorMessage("Error al cargar la lista de usuarios. Intenta nuevamente.");
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get("/user-api/user");
-        const formattedUsers = response.data.map((user) => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          type: user.userType,
-          status: user.isActive ? "Activo" : "Inactivo",
-          department: user.department,
-        }));
-        setUsers(formattedUsers);
-      } catch (error) {
-        console.error("Error al obtener la lista de usuarios:", error.message);
-      }
-    };
     fetchUsers();
   }, []);
+
+  const handleAddUser = async () => {
+    try {
+      await fetchUsers();
+      setSuccessMessage("¡Usuario agregado exitosamente!");
+
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+    } catch (error) {
+      console.error("Error al actualizar la lista de usuarios:", error.message);
+    }
+  };
+
+  const handleUpdateUser = async (updatedUser) => {
+    try {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === updatedUser.id ? { ...user, ...updatedUser } : user
+        )
+      );
+      setSuccessMessage("¡Usuario actualizado exitosamente!");
+
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+    } catch (error) {
+      console.error("Error al actualizar usuario:", error.message);
+      setErrorMessage("Error al actualizar el usuario. Intenta nuevamente.");
+    }
+  };
 
   const filteredUsers = users.filter((user) => {
     return (
       (filterStatus === "" || user.status === filterStatus) &&
-      (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   });
-
-  const handleAddUser = (newUser) => {
-    setUsers([...users, { ...newUser, id: users.length + 1 }]);
-  };
-
-  const handleUpdateUser = (updatedUser) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
-    );
-    setAlertMessage({ type: "success", text: "Usuario actualizado correctamente." });
-  };
-
-  const handleError = (message) => {
-    setAlertMessage({ type: "error", text: message });
-  };
 
   return (
     <div className="flex">
       <AdminNavbar />
 
       <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
-        {alertMessage && (
-          <div
-            className={`p-4 mb-4 rounded-lg text-white ${
-              alertMessage.type === "success" ? "bg-green-500" : "bg-red-500"
-            }`}
-          >
-            {alertMessage.text}
-          </div>
-        )}
-
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
           <p className="text-lg text-gray-600 mt-2">
             Consulta, filtra y administra los usuarios registrados en el sistema.
           </p>
         </div>
+
+        {successMessage && (
+          <div className="mb-4 text-sm text-green-600 bg-green-100 p-3 rounded-md animate-bounce">
+            {successMessage}
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
+            {errorMessage}
+          </div>
+        )}
 
         <div className="mb-6 flex flex-wrap gap-4">
           <input
@@ -87,6 +108,7 @@ const AdminUsers = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-1/3 p-2 border rounded-md"
           />
+
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -96,8 +118,9 @@ const AdminUsers = () => {
             <option value="Activo">Activo</option>
             <option value="Inactivo">Inactivo</option>
           </select>
+
           <button
-            className="bg-[#00684aff] text-white px-4 py-2 rounded-md hover:bg-[#07835fff] transition"
+            className="bg-[#00684aff] text-white px-4 py-2 rounded-md shadow-lg hover:bg-[#07835fff] transition"
             onClick={() => setShowAddForm(true)}
           >
             Agregar Usuario
@@ -112,14 +135,14 @@ const AdminUsers = () => {
                 <th className="px-6 py-3 text-left font-medium text-sm">Email</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Teléfono</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Tipo</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Status</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Estado</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Departamento</th>
                 <th className="px-6 py-3 text-center font-medium text-sm">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="border-b hover:bg-gray-50">
+                <tr key={user.id} className="border-b">
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.name}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.email}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.phone}</td>
@@ -136,9 +159,9 @@ const AdminUsers = () => {
                     <button
                       onClick={() => {
                         setSelectedUser(user);
-                        setShowEditForm(true);
+                        setShowUpdateForm(true);
                       }}
-                      className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition flex items-center gap-2"
+                      className="bg-yellow-400 text-white px-4 py-2 rounded-md hover:bg-yellow-400 transition flex items-center gap-2"
                     >
                       <i className="fas fa-edit"></i> Editar
                     </button>
@@ -156,12 +179,12 @@ const AdminUsers = () => {
           />
         )}
 
-        {showEditForm && selectedUser && (
+        {showUpdateForm && selectedUser && (
           <AdminUpdateUserForm
             user={selectedUser}
-            onClose={() => setShowEditForm(false)}
+            onClose={() => setShowUpdateForm(false)}
             onUpdateSuccess={handleUpdateUser}
-            onError={handleError}
+            onError={(error) => setErrorMessage(error)}
           />
         )}
       </div>

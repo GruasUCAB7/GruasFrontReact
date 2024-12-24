@@ -11,7 +11,7 @@ const AdminHome = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Bienvenido, Administrador</h1>
           <p className="text-lg text-gray-600 mt-2">
-            Administra y consulta la información de usuarios, órdenes, y proveedores desde este panel.
+            Administra y consulta la información de usuarios, órdenes, proveedores y contratos desde este panel.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ const AdminHome = () => {
               to="/AdminOrders"
               className="bg-[#00684aff] text-white font-semibold px-4 py-2 rounded-md mt-4 hover:bg-[#07835fff] transition"
             >
-              Ver Ordenes
+              Ver Órdenes
             </Link>
           </div>
 
@@ -61,6 +61,22 @@ const AdminHome = () => {
               className="bg-[#00684aff] text-white font-semibold px-4 py-2 rounded-md mt-4 hover:bg-[#07835fff] transition"
             >
               Ver Proveedores
+            </Link>
+          </div>
+
+          <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center">
+            <div className="bg-[#00684aff] text-white w-16 h-16 flex items-center justify-center rounded-full mb-4">
+              <i className="fas fa-file-contract text-2xl"></i>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-800">Contratos</h2>
+            <p className="text-gray-600 mt-2 text-center">
+              Consulta los contratos registrados en el sistema.
+            </p>
+            <Link
+              to="/AdminContracts"
+              className="bg-[#00684aff] text-white font-semibold px-4 py-2 rounded-md mt-4 hover:bg-[#07835fff] transition"
+            >
+              Ver Contratos
             </Link>
           </div>
 
