@@ -33,7 +33,7 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
 **Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-<img width="728" alt="AdminHome" src="https://github.com/user-attachments/assets/8256d506-420b-4dd5-98f1-9371bf5efe40">
+<img width="951" alt="AdminHome" src="https://github.com/user-attachments/assets/56e1ab16-4800-43aa-94ce-65aa6e1235cf" />
 
 <img width="814" alt="AdminUsers" src="https://github.com/user-attachments/assets/54feb774-87ff-4e8c-b2a0-e5e54a911f3a">
 
@@ -46,6 +46,10 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 <img width="815" alt="AdminProviders" src="https://github.com/user-attachments/assets/f107eb50-49e4-478b-a945-a2f9704d8f59">
 
 <img width="817" alt="AdminCranesDrivers" src="https://github.com/user-attachments/assets/58690418-72e6-4100-a882-7bbad9ce26e8">
+
+<img width="952" alt="AdminContracts" src="https://github.com/user-attachments/assets/af779123-f609-4a5b-9c31-47795cab48a8" />
+
+<img width="935" alt="AdminContractDetail" src="https://github.com/user-attachments/assets/c6166277-627d-49be-b950-d7d134b1248b" />
 
 <img width="813" alt="AdminProfile" src="https://github.com/user-attachments/assets/fb32cd3e-be36-49cd-978a-895049da413f">
 
