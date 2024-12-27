@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 const AdminContracts = () => {
   const [contracts, setContracts] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterState, setFilterState] = useState("");
   const navigate = useNavigate();
 
   const fetchContracts = async () => {
@@ -60,16 +62,51 @@ const AdminContracts = () => {
     fetchContracts();
   }, []);
 
+  const filteredContracts = contracts.filter((contract) => {
+    const matchesSearchTerm =
+      searchTerm === "" ||
+      contract.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesState =
+      filterState === "" || contract.status === filterState;
+
+    return matchesSearchTerm && matchesState;
+  });
+
   return (
     <div className="flex">
       <AdminNavbar />
       <div className="flex-1 ml-60 p-8 bg-gray-100">
-        <h1 className="text-3xl font-bold mb-6">Consulta de Contratos</h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Consulta de Contratos</h1>
+          <p className="text-lg text-gray-600 mt-2">
+            Consulta los contratos registrados.
+          </p>
+        </div>
+
         {errorMessage && (
           <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
             {errorMessage}
           </div>
         )}
+        <div className="mb-6 flex flex-wrap gap-4">
+          <input
+            type="text"
+            placeholder="Buscar por Cliente"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full md:w-1/4 p-2 border rounded-md"
+          />
+          <select
+            value={filterState}
+            onChange={(e) => setFilterState(e.target.value)}
+            className="w-full md:w-1/4 p-2 border rounded-md"
+          >
+            <option value="">Estado (Todos)</option>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        </div>
         <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-lg">
           <thead className="bg-[#00684aff] text-white">
             <tr>
@@ -81,18 +118,19 @@ const AdminContracts = () => {
             </tr>
           </thead>
           <tbody>
-            {contracts.map((contract) => (
+            {filteredContracts.map((contract) => (
               <tr key={contract.id} className="border-b">
                 <td className="px-6 py-4">{contract.startDate}</td>
                 <td className="px-6 py-4">{contract.expirationDate}</td>
-                <td
-                  className={`px-6 py-4 font-semibold ${
-                    contract.status === "Activo"
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  {contract.status}
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-2 py-1 rounded-md text-sm font-medium ${contract.status === "Activo"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                      }`}
+                  >
+                    {contract.status}
+                  </span>
                 </td>
                 <td className="px-6 py-4">{contract.clientName}</td>
                 <td className="px-6 py-4 text-center">

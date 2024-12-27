@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import {
   GoogleMap,
   LoadScript,
-  Autocomplete,
   DirectionsRenderer,
   Marker,
 } from "@react-google-maps/api";
@@ -21,10 +20,8 @@ const AdminAddOrderForm = ({ onClose, onAddOrder }) => {
   const [originMarker, setOriginMarker] = useState(null);
   const [destinationMarker, setDestinationMarker] = useState(null);
   const [directionsResponse, setDirectionsResponse] = useState(null);
-  const [selectingOrigin, setSelectingOrigin] = useState(true); // Flag to know whether we are setting origin or destination.
+  const [selectingOrigin, setSelectingOrigin] = useState(true);
 
-  const originRef = useRef(null);
-  const destinationRef = useRef(null);
   const geocoderRef = useRef(null);
 
   const initializeGeocoder = () => {
@@ -63,11 +60,11 @@ const AdminAddOrderForm = ({ onClose, onAddOrder }) => {
     if (selectingOrigin) {
       setOriginMarker(latLng);
       getAddressFromCoords(latLng.lat, latLng.lng, true);
-      setSelectingOrigin(false); // Move to destination selection
+      setSelectingOrigin(false);
     } else {
       setDestinationMarker(latLng);
       getAddressFromCoords(latLng.lat, latLng.lng, false);
-      setSelectingOrigin(true); // Reset for the next input
+      setSelectingOrigin(true);
     }
 
     calculateRoute(latLng, selectingOrigin ? destinationMarker : originMarker);
@@ -110,7 +107,6 @@ const AdminAddOrderForm = ({ onClose, onAddOrder }) => {
         <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl h-[80%] overflow-auto p-6">
           <h2 className="text-2xl font-bold mb-4">Agregar Orden</h2>
           <div className="space-y-4">
-            {/* Input Fields */}
             <input
               type="text"
               name="name"
@@ -144,7 +140,6 @@ const AdminAddOrderForm = ({ onClose, onAddOrder }) => {
               className="w-full p-2 border rounded-md"
             />
 
-            {/* Map Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="text"
@@ -162,7 +157,6 @@ const AdminAddOrderForm = ({ onClose, onAddOrder }) => {
               />
             </div>
 
-            {/* Map */}
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "300px" }}
               center={{ lat: 10.48801, lng: -66.87919 }}

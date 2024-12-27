@@ -9,6 +9,7 @@ import AdminCranes from './pages/Admin/AdminCranes';
 import AdminContracts from './pages/Admin/AdminContracts';
 import AdminProfile from  './pages/Admin/AdminProfile';
 import AdminContractDetail from './components/AdminComponents/AdminContractDetail';
+import AdminProvidersDetail from './components/AdminComponents/AdminProviderDetail';
 
 const App = () => {
     return (
@@ -22,6 +23,7 @@ const App = () => {
                 <Route path="/AdminCranes" element={<AdminCranes />} />
                 <Route path="/AdminContracts" element={<AdminContracts />} />
                 <Route path="/AdminContractDetail/:id" element={<AdminContractDetail />} />
+                <Route path="/AdminProvidersDetail/:id" element={<AdminProvidersDetail />}/>
                 <Route path="/AdminProfile" element={<AdminProfile />} />
 
             </Routes>

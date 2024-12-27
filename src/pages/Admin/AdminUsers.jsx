@@ -84,7 +84,7 @@ const AdminUsers = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
           <p className="text-lg text-gray-600 mt-2">
-            Consulta, filtra y administra los usuarios registrados en el sistema.
+            Consulta y administra los usuarios registrados.
           </p>
         </div>
 
@@ -147,12 +147,16 @@ const AdminUsers = () => {
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.email}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.phone}</td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.type}</td>
-                  <td
-                    className={`px-6 py-4 font-semibold text-sm ${
-                      user.status === "Activo" ? "text-green-500" : "text-red-500"
-                    }`}
-                  >
-                    {user.status}
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-1 rounded-md text-sm font-medium ${
+                        user.status === "Activo"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {user.status}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.department}</td>
                   <td className="px-6 py-4 text-center flex justify-center gap-4">
@@ -161,9 +165,9 @@ const AdminUsers = () => {
                         setSelectedUser(user);
                         setShowUpdateForm(true);
                       }}
-                      className="bg-yellow-400 text-white px-4 py-2 rounded-md hover:bg-yellow-400 transition flex items-center gap-2"
+                      className="bg-yellow-400 text-white px-4 py-2 rounded-md hover:bg-yellow-500 transition"
                     >
-                      <i className="fas fa-edit"></i> Editar
+                      Editar
                     </button>
                   </td>
                 </tr>

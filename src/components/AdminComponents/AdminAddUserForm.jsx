@@ -40,7 +40,7 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
       const response = await axios.post("/user-api/user", payload);
 
       if (response.status === 200 || response.status === 201) {
-        onAddUser(response.data); 
+        onAddUser(response.data);
         onClose();
       }
     } catch (error) {

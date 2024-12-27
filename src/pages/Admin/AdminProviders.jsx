@@ -1,70 +1,120 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "../../axiosInstance";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import AdminAddProviderForm from "../../components/AdminComponents/AdminAddProviderForm";
+import AdminEditProviderForm from "../../components/AdminComponents/AdminEditProviderForm";
 import { useNavigate } from "react-router-dom";
 
 const AdminProviders = () => {
-  const navigate = useNavigate();
-
-  const [providers, setProviders] = useState([
-    {
-      id: 1,
-      name: "Transporte",
-      email: "perez@transportes.com",
-      phone: "+58 4121234567",
-      entryDate: "01/03/2023",
-    },
-    {
-      id: 2,
-      name: "Grúas",
-      email: "lopez@gruas.com",
-      phone: "+58 4129876543",
-      entryDate: "12/06/2023",
-    },
-  ]);
-
+  const [providers, setProviders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterState, setFilterState] = useState("");
+  const [filterProviderType, setFilterProviderType] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
-  const filteredProviders = providers.filter(
-    (provider) =>
-      provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      provider.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const navigate = useNavigate();
 
-  const handleAddProvider = (newProvider) => {
-    setProviders([...providers, { ...newProvider, id: providers.length + 1 }]);
+  const fetchProviders = async () => {
+    try {
+      const response = await axios.get("/provider-api/provider");
+      setProviders(response.data);
+    } catch (error) {
+      console.error("Error al cargar proveedores:", error.message);
+    }
   };
 
-  const handleEditProvider = (updatedProvider) => {
-    setProviders(
-      providers.map((provider) =>
-        provider.id === updatedProvider.id ? updatedProvider : provider
-      )
-    );
+  useEffect(() => {
+    fetchProviders();
+  }, []);
+
+  const handleAddProvider = async (newProvider) => {
+    try {
+      await axios.post("/provider-api/provider", newProvider);
+      await fetchProviders();
+      setShowAddForm(false);
+    } catch (error) {
+      console.error("Error al agregar proveedor:", error.message);
+      setErrorMessage(
+        error.response?.data?.message || "Error al agregar proveedor. Intenta nuevamente."
+      );
+    }
+  };
+
+  const handleEditProvider = async (id, updatedData) => {
+    try {
+      await axios.patch(`/provider-api/provider/${id}`, updatedData);
+      console.log("Proveedor actualizado");
+      fetchProviders();
+      setShowEditForm(false);
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Ocurrió un error al actualizar el proveedor.";
+      setErrorMessage(errorMessage);
+      console.error("Error al editar proveedor:", errorMessage);
+    }
+  };
+
+  const filteredProviders = providers.filter((provider) => {
+    const matchesSearchTerm =
+      searchTerm === "" || provider.rif?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesState =
+      filterState === "" || (provider.isActive ? "Activo" : "Inactivo") === filterState;
+
+    const matchesProviderType =
+      filterProviderType === "" || provider.providerType === filterProviderType;
+
+    return matchesSearchTerm && matchesState && matchesProviderType;
+  });
+
+  const handleViewDetails = (id) => {
+    navigate(`/AdminProvidersDetail/${id}`);
   };
 
   return (
     <div className="flex">
       <AdminNavbar />
-      <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
+      <div className="flex-1 ml-60 p-8 bg-gray-100">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Proveedores</h1>
           <p className="text-lg text-gray-600 mt-2">
-            Consulta, administra y agrega nuevos proveedores.
+            Consulta y administra los proveedores registrados.
           </p>
         </div>
 
+        {errorMessage && (
+          <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
+            {errorMessage}
+          </div>
+        )}
         <div className="mb-6 flex flex-wrap gap-4">
           <input
             type="text"
-            placeholder="Buscar por nombre o email"
+            placeholder="Buscar por RIF"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-1/3 p-2 border rounded-md"
+            className="w-full md:w-1/4 p-2 border rounded-md"
           />
-
+          <select
+            value={filterState}
+            onChange={(e) => setFilterState(e.target.value)}
+            className="w-full md:w-1/4 p-2 border rounded-md"
+          >
+            <option value="">Estado (Todos)</option>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+          <select
+            value={filterProviderType}
+            onChange={(e) => setFilterProviderType(e.target.value)}
+            className="w-full md:w-1/4 p-2 border rounded-md"
+          >
+            <option value="">Tipo de Proveedor (Todos)</option>
+            <option value="Interno">Interno</option>
+            <option value="Externo">Externo</option>
+          </select>
           <button
             onClick={() => {
               setSelectedProvider(null);
@@ -75,55 +125,67 @@ const AdminProviders = () => {
             Agregar Proveedor
           </button>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-lg">
-            <thead className="bg-[#00684aff] text-white">
-              <tr>
-                <th className="px-6 py-3 text-left font-medium text-sm">ID</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Proveedor</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Email</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Teléfono</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Fecha de Ingreso</th>
-                <th className="px-6 py-3 text-center font-medium text-sm">Acciones</th>
+        <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-lg">
+          <thead className="bg-[#00684aff] text-white">
+            <tr>
+              <th className="px-6 py-3 text-left">RIF</th>
+              <th className="px-6 py-3 text-left">Tipo de Proveedor</th>
+              <th className="px-6 py-3 text-left">Grúas</th>
+              <th className="px-6 py-3 text-left">Conductores</th>
+              <th className="px-6 py-3 text-left">Estado</th>
+              <th className="px-6 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProviders.map((provider) => (
+              <tr key={provider.id} className="border-b">
+                <td className="px-6 py-4">{provider.rif}</td>
+                <td className="px-6 py-4">{provider.providerType}</td>
+                <td className="px-6 py-4">{provider.fleetOfCranes?.length || 0}</td>
+                <td className="px-6 py-4">{provider.drivers?.length || 0}</td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-2 py-1 rounded-md text-sm font-medium ${provider.isActive
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                      }`}
+                  >
+                    {provider.isActive ? "Activo" : "Inactivo"}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-center flex justify-center gap-4">
+                  <button
+                    onClick={() => {
+                      setSelectedProvider(provider);
+                      setShowEditForm(true);
+                    }}
+                    className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleViewDetails(provider.id)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+                  >
+                    Ver Detalles
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredProviders.map((provider) => (
-                <tr key={provider.id} className="border-b">
-                  <td className="px-6 py-4 text-gray-700 text-sm">{provider.id}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{provider.name}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{provider.email}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{provider.phone}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{provider.entryDate}</td>
-                  <td className="px-6 py-4 text-center flex justify-center gap-4">
-                    <button
-                      onClick={() => navigate(`/AdminCranes?providerId=${provider.id}`)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
-                    >
-                      Ver Detalles
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedProvider(provider);
-                        setShowAddForm(true);
-                      }}
-                      className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition flex items-center gap-2"
-                    >
-                      <i className="fas fa-edit"></i> Editar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
+            ))}
+          </tbody>
+        </table>
         {showAddForm && (
           <AdminAddProviderForm
-            provider={selectedProvider}
             onClose={() => setShowAddForm(false)}
-            onSubmit={selectedProvider ? handleEditProvider : handleAddProvider}
+            onSubmit={handleAddProvider}
+          />
+        )}
+        {showEditForm && selectedProvider && (
+          <AdminEditProviderForm
+            provider={selectedProvider}
+            onClose={() => setShowEditForm(false)}
+            onSubmit={handleEditProvider}
+            setErrorMessage={setErrorMessage}
           />
         )}
       </div>
