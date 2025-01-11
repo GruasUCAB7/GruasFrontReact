@@ -1,77 +1,137 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../axiosInstance";
 
-const AdminAddProviderForm = ({ onClose, onSubmit }) => {
+const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
   const [formData, setFormData] = useState({
+    userId: "",
     rif: "",
     providerType: "Interno",
-    fleetOfCranes: [],
-    drivers: [],
+    status: "Activo",
   });
 
-  const [availableCranes, setAvailableCranes] = useState([]);
-  const [availableDrivers, setAvailableDrivers] = useState([]);
-  const [selectedCrane, setSelectedCrane] = useState("");
-  const [selectedDriver, setSelectedDriver] = useState("");
+  const [availableProviders, setAvailableProviders] = useState([]);
+  const [loading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const fetchCranesAndDrivers = async () => {
+    const fetchAvailableProviders = async () => {
       try {
-        const cranesResponse = await axios.get("/provider-api/crane");
-        setAvailableCranes(cranesResponse.data);
-        const driversResponse = await axios.get("/provider-api/driver");
-        setAvailableDrivers(driversResponse.data);
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          setErrorMessage("Error de autenticación. Por favor, inicia sesión nuevamente.");
+          return;
+        }
+
+        const providerResponse = await axios.get("/provider-api/provider", {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+
+        const registeredProviderIds = providerResponse.data.map((provider) => provider.id);
+
+        const usersResponse = await axios.get("/user-api/user", {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+
+        const filteredProviders = usersResponse.data.filter(
+          (user) =>
+            user.userType === "Provider" &&
+            user.isActive &&
+            !registeredProviderIds.includes(user.id)
+        );
+
+        setAvailableProviders(filteredProviders);
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching cranes or drivers:", error.message);
+        setErrorMessage("Error al cargar los usuarios disponibles. Intenta nuevamente.");
+        setIsLoading(false);
       }
     };
-    fetchCranesAndDrivers();
+
+    fetchAvailableProviders();
   }, []);
-
-  const handleAddCrane = () => {
-    if (selectedCrane && !formData.fleetOfCranes.includes(selectedCrane)) {
-      setFormData({
-        ...formData,
-        fleetOfCranes: [...formData.fleetOfCranes, selectedCrane],
-      });
-      setSelectedCrane("");
-    }
-  };
-
-  const handleAddDriver = () => {
-    if (selectedDriver && !formData.drivers.includes(selectedDriver)) {
-      setFormData({
-        ...formData,
-        drivers: [...formData.drivers, selectedDriver],
-      });
-      setSelectedDriver("");
-    }
-  };
-
-  const handleRemoveCrane = (craneId) => {
-    setFormData({
-      ...formData,
-      fleetOfCranes: formData.fleetOfCranes.filter((id) => id !== craneId),
-    });
-  };
-
-  const handleRemoveDriver = (driverId) => {
-    setFormData({
-      ...formData,
-      drivers: formData.drivers.filter((id) => id !== driverId),
-    });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSubmit(formData);
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        setErrorMessage("Error de autenticación. Por favor, inicia sesión nuevamente.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const payload = {
+        userId: formData.userId,
+        rif: formData.rif,
+        providerType: formData.providerType,
+        status: formData.status,
+      };
+
+      const response = await axios.post(
+        "/provider-api/provider",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      if (response.status === 201) {
+        onSubmitSuccess(response.data);
+        onClose();
+      }
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "Error al agregar el proveedor. Intenta nuevamente."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+          <h2 className="text-xl font-bold text-gray-800">Cargando...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Agregar Proveedor</h2>
+        {errorMessage && (
+          <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
+            {errorMessage}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-gray-700 font-medium">Usuario</label>
+            <select
+              name="userId"
+              value={formData.userId}
+              onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+              className="w-full p-2 border rounded-md"
+              required
+            >
+              <option value="">Selecciona un usuario</option>
+              {availableProviders.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.email} - {user.name}
+                </option>
+              ))}
+            </select>
+
+          </div>
           <div>
             <label className="block text-gray-700 font-medium">RIF</label>
             <input
@@ -80,6 +140,7 @@ const AdminAddProviderForm = ({ onClose, onSubmit }) => {
               value={formData.rif}
               onChange={(e) => setFormData({ ...formData, rif: e.target.value })}
               className="w-full p-2 border rounded-md"
+              placeholder="Ingrese el RIF del proveedor"
               required
             />
           </div>
@@ -95,107 +156,21 @@ const AdminAddProviderForm = ({ onClose, onSubmit }) => {
               <option value="Externo">Externo</option>
             </select>
           </div>
-          <div>
-            <label className="block text-gray-700 font-medium">Grúas</label>
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedCrane}
-                className="w-full p-2 border rounded-md"
-                onChange={(e) => setSelectedCrane(e.target.value)}
-              >
-                <option value="">Selecciona una grúa</option>
-                {availableCranes.map((crane) => (
-                  <option key={crane.id} value={crane.id}>
-                    {crane.plate} - {crane.brand} {crane.model}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleAddCrane}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
-              >
-                Agregar
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.fleetOfCranes.map((craneId) => {
-                const crane = availableCranes.find((c) => c.id === craneId);
-                return (
-                  <span
-                    key={craneId}
-                    className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full flex items-center gap-2"
-                  >
-                    {crane ? `${crane.plate} - ${crane.brand}` : craneId}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCrane(craneId)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      &times;
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">Conductores</label>
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedDriver}
-                className="w-full p-2 border rounded-md"
-                onChange={(e) => setSelectedDriver(e.target.value)}
-              >
-                <option value="">Selecciona un conductor</option>
-                {availableDrivers.map((driver) => (
-                  <option key={driver.id} value={driver.id}>
-                    {driver.dni}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleAddDriver}
-                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
-              >
-                Agregar
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.drivers.map((driverId) => {
-                const driver = availableDrivers.find((d) => d.id === driverId);
-                return (
-                  <span
-                    key={driverId}
-                    className="bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-2"
-                  >
-                    {driver ? driver.dni : driverId}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveDriver(driverId)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      &times;
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          </div>
           <div className="flex justify-end space-x-4">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition"
+              disabled={isSubmitting}
             >
               Cancelar
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-[#00684aff] text-white rounded-md hover:bg-[#07835fff] transition"
+              disabled={isSubmitting}
             >
-              Agregar
+              {isSubmitting ? "Guardando..." : "Agregar"}
             </button>
           </div>
         </form>

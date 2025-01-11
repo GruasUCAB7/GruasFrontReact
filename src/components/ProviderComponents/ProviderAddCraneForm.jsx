@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import axios from "../../axiosInstance";
 
-const AdminAddUserForm = ({ onClose, onAddUser }) => {
+const ProviderAddCraneForm = ({ onClose, onAddCrane, providerId }) => {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    userType: "Operator",
-    isActive: true,
-    department: "",
+    brand: "",
+    model: "",
+    plate: "",
+    craneSize: "",
+    year: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -29,35 +28,37 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
     setIsLoading(true);
     setErrorMessage("");
 
-    const payload = {
-      name: formData.name.trim(),
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      userType: formData.userType,
-      isActive: true,
-      department: formData.department.trim(),
-    };
-
     try {
-      const response = await axios.post("/user-api/user", payload, {
+      const createCraneResponse = await axios.post("/provider-api/crane", formData, {
         headers: {
           Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
         },
       });
 
-      if (response.status === 200 || response.status === 201) {
-        onAddUser(response.data);
-        onClose();
-      }
+      const newCrane = {
+        ...createCraneResponse.data,
+        isActive: createCraneResponse.data.isActive ?? true,
+      };
+
+      const updateProviderPayload = {
+        fleetOfCranes: [newCrane.id],
+        drivers: [],
+      };
+
+      await axios.patch(`/provider-api/provider/${providerId}`, updateProviderPayload, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      onAddCrane(newCrane);
+      onClose();
     } catch (error) {
-      if (error.response) {
-        const { message, errors } = error.response.data;
-        setErrorMessage(
-          message || errors?.join(", ") || "Error desconocido al guardar el usuario."
-        );
-      } else {
-        setErrorMessage("Error de red: No se pudo conectar al servidor.");
-      }
+      setErrorMessage(
+        error.response?.data?.message || "Error desconocido al guardar la grúa."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +67,7 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-        <h2 className="text-2xl font-bold mb-4">Agregar Usuario</h2>
+        <h2 className="text-2xl font-bold mb-4">Agregar Grúa</h2>
 
         {errorMessage && (
           <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
@@ -76,68 +77,69 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium">Nombre</label>
+            <label className="block text-gray-700 font-medium">Marca</label>
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="brand"
+              value={formData.brand}
               onChange={handleChange}
               required
-              placeholder="Ingresar Nombre"
+              placeholder="Ingresar marca"
               className="w-full p-2 border rounded-md"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder="Ingresar email"
-              className="w-full p-2 border rounded-md"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium">Teléfono</label>
+            <label className="block text-gray-700 font-medium">Modelo</label>
             <input
               type="text"
-              name="phone"
-              value={formData.phone}
+              name="model"
+              value={formData.model}
               onChange={handleChange}
               required
-              placeholder="Ej: +58 424-1234567"
+              placeholder="Ingresar modelo"
               className="w-full p-2 border rounded-md"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium">Tipo de Usuario</label>
+            <label className="block text-gray-700 font-medium">Placa</label>
+            <input
+              type="text"
+              name="plate"
+              value={formData.plate}
+              onChange={handleChange}
+              required
+              placeholder="Ingresar placa XX000XX"
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium">Tamaño</label>
             <select
-              name="userType"
-              value={formData.userType}
+              name="craneSize"
+              value={formData.craneSize}
               onChange={handleChange}
               required
               className="w-full p-2 border rounded-md"
             >
-              <option value="Operator">Operator</option>
-              <option value="Provider">Provider</option>
-              <option value="Driver">Driver</option>
+              <option value="">Seleccionar tamaño</option>
+              <option value="Ligera">Ligera</option>
+              <option value="Mediana">Mediana</option>
+              <option value="Pesada">Pesada</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium">Departamento</label>
+            <label className="block text-gray-700 font-medium">Año</label>
             <input
-              type="text"
-              name="department"
-              value={formData.department}
+              type="number"
+              name="year"
+              value={formData.year}
               onChange={handleChange}
               required
-              placeholder="Ingresar nombre del departamento"
+              placeholder="Ingresar año"
               className="w-full p-2 border rounded-md"
             />
           </div>
@@ -164,4 +166,4 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
   );
 };
 
-export default AdminAddUserForm;
+export default ProviderAddCraneForm;

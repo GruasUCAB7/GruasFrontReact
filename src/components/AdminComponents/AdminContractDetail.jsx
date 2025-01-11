@@ -34,7 +34,6 @@ const AdminContractDetail = () => {
           setPolicy(policyResponse.data);
         }
       } catch (error) {
-        console.error("Error al obtener los detalles del contrato:", error);
         setErrorMessage("No se pudieron cargar los detalles del contrato.");
       }
     };

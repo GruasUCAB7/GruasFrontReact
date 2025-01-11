@@ -1,22 +1,54 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "../../axiosInstance";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import AdminAddUserForm from "../../components/AdminComponents/AdminAddUserForm";
 import AdminUpdateUserForm from "../../components/AdminComponents/AdminUpdateUserForm";
 
+
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [userRole, setUserRole] = useState(null);
+  const navigate = useNavigate();
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    const authToken = localStorage.getItem("authToken");
+
+    if (!authToken) {
+      navigate("/login");
+      return;
+    }
+
     try {
-      const response = await axios.get("/user-api/user");
+      const tokenPayload = JSON.parse(atob(authToken.split(".")[1]));
+      const role = tokenPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      setUserRole(role);
+
+      if (role !== "Admin" && role !== "Operator") {
+        console.error("Acceso denegado: Rol no autorizado.");
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Error al decodificar el token:", error);
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const response = await axios.get("/user-api/user", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
       const formattedUsers = response.data.map((user) => ({
         id: user.id,
         name: user.name,
@@ -24,18 +56,20 @@ const AdminUsers = () => {
         phone: user.phone,
         type: user.userType,
         status: user.isActive ? "Activo" : "Inactivo",
+        isTemporaryPassword: user.isTemporaryPassword ? "En espera" : "Finalizada",
         department: user.department,
       }));
       setUsers(formattedUsers);
+      setLoading(false);
     } catch (error) {
-      console.error("Error al obtener la lista de usuarios:", error.message);
       setErrorMessage("Error al cargar la lista de usuarios. Intenta nuevamente.");
+      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const handleAddUser = async () => {
     try {
@@ -76,11 +110,22 @@ const AdminUsers = () => {
     );
   });
 
+  if (loading) {
+    return (
+      <div>
+        <AdminNavbar userRole={userRole} />
+        <div className="flex items-center justify-center h-screen bg-gray-100">
+          <h1 className="text-2xl font-bold text-gray-800">Cargando datos...</h1>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex">
-      <AdminNavbar />
+      <AdminNavbar userRole={userRole} />
 
-      <div className="flex-1 ml-60 p-8 bg-gray-100 overflow-auto">
+      <div className="flex-1 ml-30 p-8 bg-gray-100 overflow-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
           <p className="text-lg text-gray-600 mt-2">
@@ -137,6 +182,7 @@ const AdminUsers = () => {
                 <th className="px-6 py-3 text-left font-medium text-sm">Tipo</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Estado</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Departamento</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Clave Temporal</th>
                 <th className="px-6 py-3 text-center font-medium text-sm">Acciones</th>
               </tr>
             </thead>
@@ -149,16 +195,25 @@ const AdminUsers = () => {
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.type}</td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-2 py-1 rounded-md text-sm font-medium ${
-                        user.status === "Activo"
+                      className={`px-2 py-1 rounded-md text-sm font-medium ${user.status === "Activo"
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
-                      }`}
+                        }`}
                     >
                       {user.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-700 text-sm">{user.department}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-1 rounded-md text-sm font-medium ${user.isTemporaryPassword === "En espera"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
+                        }`}
+                    >
+                      {user.isTemporaryPassword}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-center flex justify-center gap-4">
                     <button
                       onClick={() => {

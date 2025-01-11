@@ -5,32 +5,66 @@ const AdminUpdateUserForm = ({ user, onClose, onUpdateSuccess, onError }) => {
   const [phone, setPhone] = useState(user.phone || "");
   const [status, setStatus] = useState(user.status === "Activo");
   const [department, setDepartment] = useState(user.department || "");
+  const [passwordExpirationDate, setPasswordExpirationDate] = useState(
+    user.passwordExpirationDate
+      ? new Date(user.passwordExpirationDate).toISOString().split("T")[0]
+      : ""
+  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  const authToken = localStorage.getItem("authToken");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setIsLoading(true);
+  
+    if (!authToken) {
+      onError("No se encontró un token de autorización. Inicia sesión nuevamente.");
+      setIsLoading(false);
+      return;
+    }
+  
     try {
       const updatedUser = {
-        id: user.id,
-        phone: phone || null,
+        phone: phone.trim(),
         isActive: status,
-        department: department || null,
+        department: department.trim(),
+        passwordExpirationDate: passwordExpirationDate
+          ? new Date(passwordExpirationDate).toISOString()
+          : null,
       };
-
-      await axios.patch(`/user-api/user/${user.id}`, updatedUser);
-
-      onUpdateSuccess({ ...user, phone, status: status ? "Activo" : "Inactivo", department });
+  
+      await axios.patch(
+        `/user-api/user/${user.id}`,
+        updatedUser,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      onUpdateSuccess({
+        ...user,
+        phone,
+        status: status ? "Activo" : "Inactivo",
+        department,
+        passwordExpirationDate,
+      });
       onClose();
     } catch (error) {
-      console.error("Error al actualizar usuario:", error);
-
       if (error.response) {
         const errorMsg =
           error.response.data?.message || "Hubo un problema al actualizar el usuario.";
         onError(errorMsg);
-      } else {
+      } else if (error.request) {
         onError("Error de red: No se pudo conectar al servidor.");
+      } else {
+        onError("Error desconocido al configurar la solicitud.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,6 +107,18 @@ const AdminUpdateUserForm = ({ user, onClose, onUpdateSuccess, onError }) => {
             />
           </div>
 
+          <div>
+            <label className="block text-gray-700 font-medium">
+              Fecha de Expiración de Contraseña
+            </label>
+            <input
+              type="date"
+              value={passwordExpirationDate}
+              onChange={(e) => setPasswordExpirationDate(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+
           <div className="flex justify-end space-x-4">
             <button
               type="button"
@@ -83,9 +129,10 @@ const AdminUpdateUserForm = ({ user, onClose, onUpdateSuccess, onError }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#00684aff] text-white rounded-md hover:bg-[#00684aff] transition"
+              disabled={isLoading}
+              className="px-4 py-2 bg-[#00684aff] text-white rounded-md hover:bg-[#07835fff] transition"
             >
-              Guardar Cambios
+              {isLoading ? "Guardando..." : "Guardar Cambios"}
             </button>
           </div>
         </form>

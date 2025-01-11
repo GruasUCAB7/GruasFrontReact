@@ -20,15 +20,10 @@ const AdminEditProviderForm = ({ provider, onClose, onSubmit, setErrorMessage })
 
   useEffect(() => {
     const fetchCranesAndDrivers = async () => {
-      try {
-        const cranesResponse = await axios.get("/provider-api/crane");
-        setAvailableCranes(cranesResponse.data);
-
-        const driversResponse = await axios.get("/provider-api/driver");
-        setAvailableDrivers(driversResponse.data);
-      } catch (error) {
-        console.error("Error al obtener datos:", error.message);
-      }
+      const cranesResponse = await axios.get("/provider-api/crane");
+      setAvailableCranes(cranesResponse.data);
+      const driversResponse = await axios.get("/provider-api/driver");
+      setAvailableDrivers(driversResponse.data);
     };
 
     fetchCranesAndDrivers();
@@ -86,13 +81,11 @@ const AdminEditProviderForm = ({ provider, onClose, onSubmit, setErrorMessage })
     };
 
     try {
-      console.log("Payload enviado:", updatedData);
       await onSubmit(formData.id, updatedData);
       onClose();
     } catch (error) {
       const errorMessage = error.response?.data?.message || "Ocurrió un error al actualizar el proveedor.";
       setErrorMessage(errorMessage);
-      console.error("Error al guardar cambios:", errorMessage);
     }
   };
 

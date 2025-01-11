@@ -36,7 +36,6 @@ const AdminProvidersDetail = () => {
           setDrivers(driversResponse.map((res) => res.data));
         }
       } catch (error) {
-        console.error("Error al obtener los detalles del proveedor:", error);
         setErrorMessage("No se pudieron cargar los detalles del proveedor.");
       }
     };

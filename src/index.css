@@ -36,3 +36,11 @@ code {
   @apply text-[#00684aff] hover:text-[#07835fff] font-semibold;
 }
 
+.scrollable {
+  scrollbar-width: none; 
+  -ms-overflow-style: none;
+}
+
+.scrollable::-webkit-scrollbar {
+  display: none; 
+}
