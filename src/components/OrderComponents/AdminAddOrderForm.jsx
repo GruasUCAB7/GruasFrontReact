@@ -40,10 +40,10 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
                             const userResponse = await axios.get(`/user-api/user/${driver.id}`, {
                                 headers: { Authorization: `Bearer ${authToken}` },
                             });
-                            return { ...driver, name: userResponse.data.name }; // Agregar `name`
+                            return { ...driver, name: userResponse.data.name };
                         } catch (error) {
                             console.error(`Error al obtener datos del usuario con ID: ${driver.id}`, error);
-                            return { ...driver, name: "No disponible" }; // Fallback
+                            return { ...driver, name: "No disponible" };
                         }
                     })
                 );
@@ -108,7 +108,7 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
             const newOrder = {
                 ContractId: formData.contractClient,
                 OperatorId: operatorId,
-                DriverAssigned: formData.driverAssigned || "", // Valor por defecto si no se asigna conductor
+                DriverAssigned: formData.driverAssigned || "",
                 IncidentAddress: formData.incidentAddress,
                 DestinationAddress: formData.destinationAddress,
                 IncidentType: formData.incidentType,
@@ -119,8 +119,8 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
                 headers: { Authorization: `Bearer ${authToken}` },
             });
 
-            onSubmitSuccess(); // Refrescar lista de órdenes
-            onClose(); // Cerrar formulario
+            onSubmitSuccess();
+            onClose();
         } catch (error) {
             console.error("Error al agregar la orden:", error);
             setErrorMessage("Error al agregar la orden. Intenta nuevamente.");

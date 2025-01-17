@@ -23,7 +23,7 @@ const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
     } else {
         console.error("Token no encontrado en localStorage");
     }
-    // Cargar datos iniciales
+
     useEffect(() => {
         if (order) {
             setFormData({
@@ -39,7 +39,6 @@ const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
 
         const fetchDriversAndContracts = async () => {
             try {
-                // Fetch drivers
                 const driversResponse = await axios.get("/provider-api/driver", {
                     headers: { Authorization: `Bearer ${authToken}` },
                 });
@@ -61,7 +60,6 @@ const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
 
                 setDriversList(driversWithNames);
 
-                // Fetch contracts
                 const contractsResponse = await axios.get("/order-api/order/contract", {
                     headers: { Authorization: `Bearer ${authToken}` },
                 });
@@ -86,14 +84,13 @@ const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
         setErrorMessage("");
 
         try {
-            // Actualizar la orden en el backend
             await axios.patch(`/order-api/order/${order.id}`, formData, {
                 headers: {
                     Authorization: `Bearer ${authToken}`,
                 },
             });
-            onSubmitSuccess(); // Refrescar la lista de órdenes
-            onClose(); // Cerrar el formulario
+            onSubmitSuccess();
+            onClose();
         } catch (error) {
             setErrorMessage("Error al editar la orden. Intenta nuevamente.");
         } finally {

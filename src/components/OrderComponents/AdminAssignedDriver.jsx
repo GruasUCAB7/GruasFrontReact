@@ -16,25 +16,23 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
           headers: { Authorization: `Bearer ${authToken}` },
         });
 
-        // Filtrar conductores disponibles
         const availableDrivers = driversResponse.data.filter(
           (driver) => driver.isAvailable
         );
 
-        // Obtener información adicional (nombre) de los usuarios asociados
         const driversWithNames = await Promise.all(
           availableDrivers.map(async (driver) => {
             try {
               const userResponse = await axios.get(`/user-api/user/${driver.userId}`, {
                 headers: { Authorization: `Bearer ${authToken}` },
               });
-              return { ...driver, name: userResponse.data.name }; // Agregar el nombre
+              return { ...driver, name: userResponse.data.name };
             } catch (error) {
               console.error(
                 `Error al obtener datos del usuario con ID: ${driver.userId}`,
                 error
               );
-              return { ...driver, name: "No disponible" }; // Fallback en caso de error
+              return { ...driver, name: "No disponible" };
             }
           })
         );
@@ -59,7 +57,6 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
     setErrorMessage("");
 
     try {
-      // Actualizar la orden con el conductor asignado
       await axios.put(
         `/order-api/order/${orderId}/updateDriverAssigned`,
         { driverId: selectedDriver },
@@ -68,7 +65,6 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
         }
       );
 
-      // Preguntar
       await axios.patch(
         `/provider-api/driver/${selectedDriver}`,
         { isAvailable: false },
@@ -77,8 +73,8 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
         }
       );
 
-      onDriverAssigned(); // Actualiza la lista de órdenes en `AdminOrders`
-      onClose(); // Cierra el modal
+      onDriverAssigned();
+      onClose();
     } catch (error) {
       console.error("Error al asignar conductor:", error);
       setErrorMessage("Error al asignar el conductor. Intenta nuevamente.");
