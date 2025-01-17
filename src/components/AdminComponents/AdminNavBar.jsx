@@ -10,12 +10,11 @@ const AdminNavbar = ({ userRole }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Obtener el userId del token al cargar el componente
     const authToken = localStorage.getItem("authToken");
     if (authToken) {
       try {
         const tokenPayload = JSON.parse(atob(authToken.split(".")[1]));
-        const userIdFromToken = tokenPayload.sub; // `sub` representa el ID del usuario en el token
+        const userIdFromToken = tokenPayload.sub;
         setUserId(userIdFromToken);
       } catch (error) {
         navigate("/login");
@@ -39,7 +38,7 @@ const AdminNavbar = ({ userRole }) => {
     {
       key: "ordenes",
       title: "Órdenes",
-      path: "/AdminOrders",
+      path: userId ? `/AdminOrders/${userId}` : "/AdminOrders",
       roles: ["Admin", "Operator"],
     },
     {

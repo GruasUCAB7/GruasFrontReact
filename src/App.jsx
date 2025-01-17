@@ -125,7 +125,7 @@ const App = () => {
           }
         />
         <Route
-          path="/AdminOrders"
+          path="/AdminOrders/:id"
           element={
             <PrivateRoute allowedRoles={["Admin", "Operator"]}>
               <AdminLayout userRole={userRole}>

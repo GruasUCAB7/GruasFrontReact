@@ -2,20 +2,28 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../axiosInstance";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
-import AdminAddOrderForm from "../../components/AdminComponents/AdminAddOrderForm";
-import AdminEditOrderStatusForm from "../../components/AdminComponents/AdminEditOrderStatusForm";
+import AdminAddOrderForm from "../../components/OrderComponents/AdminAddOrderForm";
+import AdminEditOrderForm from "../../components/OrderComponents/AdminEditOrderForm";
+import AdminAssignedDriver from "../../components/OrderComponents/AdminAssignedDriver";
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditStatusForm, setShowEditStatusForm] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [userRole, setUserRole] = useState(null);
+  const [operatorId, setOperatorId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showAssignDriver, setShowAssignDriver] = useState(false);
+  const [selectedOrderForDriver, setSelectedOrderForDriver] = useState(null);
+  
+
   const navigate = useNavigate();
+  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
   useEffect(() => {
     const authToken = localStorage.getItem("authToken");
@@ -27,93 +35,118 @@ const AdminOrders = () => {
 
     try {
       const tokenPayload = JSON.parse(atob(authToken.split(".")[1]));
-      const role = tokenPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-      setUserRole(role);
+      const operatorIdFromToken = tokenPayload.sub;
+      const roleFromToken = tokenPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
-      if (role !== "Admin" && role !== "Operator") {
-        console.error("Acceso denegado: Rol no autorizado.");
-        navigate("/login");
-      }
+
+
+      setOperatorId(operatorIdFromToken);
+      setUserRole(roleFromToken);
     } catch (error) {
-      console.error("Error al decodificar el token:", error);
+      console.error("Error al obtener el ID del operador desde el token", error);
       navigate("/login");
     }
   }, [navigate]);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchAddress = async (latitude, longitude) => {
     try {
-      const response = await axios.get("/order-api/orders", {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleMapsApiKey}`
+      );
+      const data = await response.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        return data.results[0].formatted_address;
+      } else {
+        return "No disponible";
+      }
+    } catch (error) {
+      return "No disponible";
+    }
+  };
+
+  const fetchUserName = async (userId) => {
+    if (!userId || userId === "Por asignar") return "No asignado";
+    try {
+      const response = await axios.get(`/user-api/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
       });
-      const formattedOrders = response.data.map((order) => ({
-        id: order.id,
-        clientId: order.clientId,
-        dni: order.dni,
-        name: order.name,
-        email: order.email,
-        phone: order.phone,
-        status: order.status,
-        driver: order.driver || "No asignado",
-        journey: order.journey || { origin: "N/A", destination: "N/A" },
-      }));
-      setOrders(formattedOrders);
+      return response.data.name;
     } catch (error) {
-      console.error("Error al obtener las órdenes:", error.message);
-      setErrorMessage("Error al cargar las órdenes. Intenta nuevamente.");
+      return "No encontrado";
     }
-  }, []);
+  };
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/order-api/order", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
+
+      const ordersWithDetails = await Promise.all(
+        response.data.map(async (order) => {
+          const incidentAddress = await fetchAddress(
+            order.incidentAddress.latitude,
+            order.incidentAddress.longitude
+          );
+          const destinationAddress = await fetchAddress(
+            order.destinationAddress.latitude,
+            order.destinationAddress.longitude
+          );
+
+          const operatorName = await fetchUserName(order.operatorAssigned);
+          const driverName = await fetchUserName(order.driverAssigned);
+
+          return {
+            ...order,
+            incidentAddress: incidentAddress || "No disponible",
+            destinationAddress: destinationAddress || "No disponible",
+            createdByOperator: operatorName || "No encontrado",
+            driverAssigned: driverName || "No asignado",
+          };
+        })
+      );
+
+      setOrders(ordersWithDetails);
+      setLoading(false);
+    } catch (error) {
+      setErrorMessage("Error al cargar las órdenes. Intenta nuevamente.");
+      setLoading(false);
+    }
+  }, [googleMapsApiKey]);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
-  const handleAddOrder = async (newOrder) => {
-    try {
-      await fetchOrders();
-      setSuccessMessage("¡Orden agregada exitosamente!");
-
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
-    } catch (error) {
-      console.error("Error al agregar la orden:", error.message);
-    }
-  };
-
-  const handleEditStatus = async (orderId, newStatus) => {
-    try {
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId ? { ...order, status: newStatus } : order
-        )
-      );
-      setSuccessMessage("¡Estado de la orden actualizado exitosamente!");
-
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
-    } catch (error) {
-      console.error("Error al actualizar el estado de la orden:", error.message);
-      setErrorMessage("Error al actualizar el estado. Intenta nuevamente.");
-    }
-  };
-
   const filteredOrders = orders.filter((order) => {
     return (
       (filterStatus === "" || order.status === filterStatus) &&
-      (order.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.dni?.toLowerCase().includes(searchTerm.toLowerCase()))
+      (order.createdByOperator.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.driverAssigned.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   });
+
+  if (loading) {
+    return (
+      <div>
+        <AdminNavbar userRole={userRole} />
+        <div className="flex items-center justify-center h-screen bg-gray-100">
+          <h1 className="text-2xl font-bold text-gray-800">Cargando órdenes...</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex">
       <AdminNavbar userRole={userRole} />
 
-      <div className="flex-1 pl-30 p-8 bg-gray-100 overflow-auto">
+      <div className="flex-1 ml-30 p-8 bg-gray-100 overflow-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gestión de Órdenes</h1>
           <p className="text-lg text-gray-600 mt-2">
@@ -136,7 +169,7 @@ const AdminOrders = () => {
         <div className="mb-6 flex flex-wrap gap-4">
           <input
             type="text"
-            placeholder="Buscar por nombre, email o DNI"
+            placeholder="Buscar por operador o conductor"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-1/3 p-2 border rounded-md"
@@ -152,7 +185,9 @@ const AdminOrders = () => {
             <option value="Completada">Completada</option>
             <option value="Cancelada">Cancelada</option>
           </select>
+        </div>
 
+        <div className="mb-6 flex flex-wrap gap-4">
           <button
             className="bg-[#00684aff] text-white px-4 py-2 rounded-md shadow-lg hover:bg-[#07835fff] transition"
             onClick={() => setShowAddForm(true)}
@@ -165,37 +200,34 @@ const AdminOrders = () => {
           <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-lg">
             <thead className="bg-[#00684aff] text-white">
               <tr>
-                <th className="px-6 py-3 text-left font-medium text-sm">ID Cliente</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">DNI</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Nombre</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Email</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Teléfono</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Operador</th>
                 <th className="px-6 py-3 text-left font-medium text-sm">Conductor</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Viaje</th>
-                <th className="px-6 py-3 text-left font-medium text-sm">Estado</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Dirección del Incidente</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Dirección de Destino</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Tipo de Incidente</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Fecha del Incidente</th>
+                <th className="px-6 py-3 text-left font-medium text-sm">Costo Total</th>
+                <th className="px-6 py-3 text-center font-medium text-sm">Estado</th>
                 <th className="px-6 py-3 text-center font-medium text-sm">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map((order) => (
                 <tr key={order.id} className="border-b">
-                  <td className="px-6 py-4 text-gray-700 text-sm">{order.clientId}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{order.dni}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{order.name}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{order.email}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{order.phone}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">{order.driver}</td>
-                  <td className="px-6 py-4 text-gray-700 text-sm">
-                    {order.journey.origin} - {order.journey.destination}
-                  </td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{order.createdByOperator}</td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{order.driverAssigned}</td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{order.incidentAddress}</td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{order.destinationAddress}</td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{order.incidentType}</td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{order.incidentDate}</td>
+                  <td className="px-6 py-4 text-gray-700 text-sm">{order.totalCost}</td>
                   <td
-                    className={`px-6 py-4 font-semibold text-sm ${
-                      order.status === "Pendiente"
-                        ? "text-yellow-500"
-                        : order.status === "Completada"
+                    className={`px-6 py-4 font-semibold text-sm ${order.status === "Pendiente"
+                      ? "text-yellow-500"
+                      : order.status === "Completada"
                         ? "text-green-500"
                         : "text-red-500"
-                    }`}
+                      }`}
                   >
                     {order.status}
                   </td>
@@ -203,11 +235,21 @@ const AdminOrders = () => {
                     <button
                       onClick={() => {
                         setSelectedOrder(order);
-                        setShowEditStatusForm(true);
+                        setShowEditForm(true);
+                      }}
+                      className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition"
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedOrderForDriver(order);
+                        setShowAssignDriver(true);
                       }}
                       className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
                     >
-                      Editar Estado
+                      Asignar Conductor
                     </button>
                   </td>
                 </tr>
@@ -215,19 +257,25 @@ const AdminOrders = () => {
             </tbody>
           </table>
         </div>
-
         {showAddForm && (
           <AdminAddOrderForm
+            operatorId={operatorId}
             onClose={() => setShowAddForm(false)}
-            onAddOrder={handleAddOrder}
+            onSubmitSuccess={fetchOrders}
           />
         )}
-
-        {showEditStatusForm && selectedOrder && (
-          <AdminEditOrderStatusForm
+        {showAssignDriver && selectedOrderForDriver && (
+          <AdminAssignedDriver
+            orderId={selectedOrderForDriver.id}
+            onClose={() => setShowAssignDriver(false)}
+            onDriverAssigned={fetchOrders}
+          />
+        )}
+        {showEditForm && selectedOrder && (
+          <AdminEditOrderForm
             order={selectedOrder}
-            onClose={() => setShowEditStatusForm(false)}
-            onSave={handleEditStatus}
+            onClose={() => setShowEditForm(false)}
+            onSubmitSuccess={fetchOrders}
           />
         )}
       </div>
