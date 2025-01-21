@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import ProviderAddCraneForm from "../../components/ProviderComponents/ProviderAddCraneForm";
 import ProviderEditCraneForm from "../../components/ProviderComponents/ProviderEditCraneForm";
@@ -45,7 +45,8 @@ const ProviderCranes = () => {
 
   const fetchCranes = useCallback(async () => {
     try {
-      const response = await axios.get(`/provider-api/provider/${id}`, {
+      console.log(localStorage.getItem("authToken"))
+      const response = await apiInstance.get(`/provider-api/provider/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
@@ -56,7 +57,7 @@ const ProviderCranes = () => {
       const craneData = await Promise.all(
         uniqueCraneIds.map(async (craneId) => {
           try {
-            const craneResponse = await axios.get(`/provider-api/crane/${craneId}`, {
+            const craneResponse = await apiInstance.get(`/provider-api/crane/${craneId}`, {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("authToken")}`,
               },
@@ -84,7 +85,7 @@ const ProviderCranes = () => {
   }, [fetchCranes]);
 
   const handleAddCrane = async (newCrane) => {
-    const craneResponse = await axios.get(`/provider-api/crane/${newCrane.id}`, {
+    const craneResponse = await apiInstance.get(`/provider-api/crane/${newCrane.id}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },

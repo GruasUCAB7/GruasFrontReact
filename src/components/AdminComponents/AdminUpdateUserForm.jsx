@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 
 const AdminUpdateUserForm = ({ user, onClose, onUpdateSuccess, onError }) => {
   const [phone, setPhone] = useState(user.phone || "");
@@ -34,7 +34,7 @@ const AdminUpdateUserForm = ({ user, onClose, onUpdateSuccess, onError }) => {
           : null,
       };
   
-      await axios.patch(
+      await apiInstance.patch(
         `/user-api/user/${user.id}`,
         updatedUser,
         {

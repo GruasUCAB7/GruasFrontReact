@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../axiosInstance";
+import axios from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import AdminAddUserForm from "../../components/AdminComponents/AdminAddUserForm";
 import AdminUpdateUserForm from "../../components/AdminComponents/AdminUpdateUserForm";

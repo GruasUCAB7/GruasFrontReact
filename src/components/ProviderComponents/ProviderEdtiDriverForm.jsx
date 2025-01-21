@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 
 const ProviderEditDriverForm = ({ driver, onClose, onUpdateSuccess, providerId }) => {
   const [isActiveLicensed, setIsActiveLicensed] = useState(driver?.isActiveLicensed || false);
@@ -19,7 +19,7 @@ const ProviderEditDriverForm = ({ driver, onClose, onUpdateSuccess, providerId }
 
     const fetchCranes = async () => {
       try {
-        const providerResponse = await axios.get(`/provider-api/provider/${providerId}`, {
+        const providerResponse = await apiInstance.get(`/provider-api/provider/${providerId}`, {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
@@ -30,7 +30,7 @@ const ProviderEditDriverForm = ({ driver, onClose, onUpdateSuccess, providerId }
         const assignedCraneIds = new Set();
 
         for (const driverId of assignedDriverIds) {
-          const driverResponse = await axios.get(`/provider-api/driver/${driverId}`, {
+          const driverResponse = await apiInstance.get(`/provider-api/driver/${driverId}`, {
             headers: {
               Authorization: `Bearer ${authToken}`,
             },
@@ -43,7 +43,7 @@ const ProviderEditDriverForm = ({ driver, onClose, onUpdateSuccess, providerId }
         const craneDetails = await Promise.all(
           fleetOfCranes.map(async (craneId) => {
             try {
-              const craneResponse = await axios.get(`/provider-api/crane/${craneId}`, {
+              const craneResponse = await apiInstance.get(`/provider-api/crane/${craneId}`, {
                 headers: {
                   Authorization: `Bearer ${authToken}`,
                 },
@@ -83,7 +83,7 @@ const ProviderEditDriverForm = ({ driver, onClose, onUpdateSuccess, providerId }
     setIsLoading(true);
 
     try {
-      const response = await axios.patch(
+      const response = await apiInstance.patch(
         `/provider-api/driver/${driver.id}`,
         {
           isActiveLicensed,

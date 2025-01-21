@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 
 const AdminEditProviderForm = ({ provider, onClose, onSubmit, setErrorMessage }) => {
   const [formData, setFormData] = useState({
@@ -20,9 +20,9 @@ const AdminEditProviderForm = ({ provider, onClose, onSubmit, setErrorMessage })
 
   useEffect(() => {
     const fetchCranesAndDrivers = async () => {
-      const cranesResponse = await axios.get("/provider-api/crane");
+      const cranesResponse = await apiInstance.get("/provider-api/crane");
       setAvailableCranes(cranesResponse.data);
-      const driversResponse = await axios.get("/provider-api/driver");
+      const driversResponse = await apiInstance.get("/provider-api/driver");
       setAvailableDrivers(driversResponse.data);
     };
 

@@ -11,14 +11,31 @@ const AdminNavbar = ({ userRole }) => {
 
   useEffect(() => {
     const authToken = localStorage.getItem("authToken");
-    if (authToken) {
-      try {
-        const tokenPayload = JSON.parse(atob(authToken.split(".")[1]));
-        const userIdFromToken = tokenPayload.sub;
-        setUserId(userIdFromToken);
-      } catch (error) {
+
+    if (!authToken) {
+      console.error("Token no encontrado. Redirigiendo a login.");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const tokenPayload = JSON.parse(atob(authToken.split(".")[1]));
+
+      // Verificar si el token ha expirado
+      const now = Math.floor(Date.now() / 1000);
+      if (tokenPayload.exp < now) {
+        console.error("El token ha expirado. Redirigiendo a login.");
+        localStorage.removeItem("authToken");
         navigate("/login");
+        return;
       }
+
+      // Si el token es válido, establecer el userId
+      setUserId(tokenPayload.sub);
+    } catch (error) {
+      console.error("Error al procesar el token. Redirigiendo a login.", error);
+      localStorage.removeItem("authToken");
+      navigate("/login");
     }
   }, [navigate]);
 
@@ -38,7 +55,7 @@ const AdminNavbar = ({ userRole }) => {
     {
       key: "ordenes",
       title: "Órdenes",
-      path: userId ? `/AdminOrders/${userId}` : "/AdminOrders",
+      path: "/AdminOrders",
       roles: ["Admin", "Operator"],
     },
     {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import "../../index.css";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 
@@ -32,7 +32,7 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const providerResponse = await axios.get(
+        const providerResponse = await apiInstance.get(
           `/provider-api/provider/${providerId}`,
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
@@ -40,7 +40,7 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
         const assignedDriverIds = providerResponse.data.drivers || [];
         const fleetOfCranes = providerResponse.data.fleetOfCranes || [];
 
-        const usersResponse = await axios.get("/user-api/user", {
+        const usersResponse = await apiInstance.get("/user-api/user", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
 
@@ -56,7 +56,7 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
         const assignedCraneIds = new Set();
 
         for (const driverId of assignedDriverIds) {
-          const driverResponse = await axios.get(`/provider-api/driver/${driverId}`, {
+          const driverResponse = await apiInstance.get(`/provider-api/driver/${driverId}`, {
             headers: { Authorization: `Bearer ${authToken}` },
           });
           if (driverResponse.data.craneAssigned) {
@@ -67,7 +67,7 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
         const craneDetails = await Promise.all(
           fleetOfCranes.map(async (craneId) => {
             try {
-              const craneResponse = await axios.get(`/provider-api/crane/${craneId}`, {
+              const craneResponse = await apiInstance.get(`/provider-api/crane/${craneId}`, {
                 headers: { Authorization: `Bearer ${authToken}` },
               });
               return craneResponse.data;
@@ -132,7 +132,7 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
     });
 
     try {
-      const createDriverResponse = await axios.post(
+      const createDriverResponse = await apiInstance.post(
         "/provider-api/driver",
         formDataToSend,
         {
@@ -144,7 +144,7 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
       );
       const newDriver = createDriverResponse.data;
 
-      const updateProviderResponse = await axios.patch(
+      const updateProviderResponse = await apiInstance.patch(
         `/provider-api/provider/${providerId}`,
         { drivers: [newDriver.id] },
         {

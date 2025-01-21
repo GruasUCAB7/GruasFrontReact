@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 
 const ProviderAddCraneForm = ({ onClose, onAddCrane, providerId }) => {
   const [formData, setFormData] = useState({
@@ -29,7 +29,7 @@ const ProviderAddCraneForm = ({ onClose, onAddCrane, providerId }) => {
     setErrorMessage("");
 
     try {
-      const createCraneResponse = await axios.post("/provider-api/crane", formData, {
+      const createCraneResponse = await apiInstance.post("/provider-api/crane", formData, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
@@ -46,7 +46,7 @@ const ProviderAddCraneForm = ({ onClose, onAddCrane, providerId }) => {
         drivers: [],
       };
 
-      await axios.patch(`/provider-api/provider/${providerId}`, updateProviderPayload, {
+      await apiInstance.patch(`/provider-api/provider/${providerId}`, updateProviderPayload, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import defaultProfileImg from "../../static/img/default-profile.png";
 
@@ -58,7 +58,7 @@ const AdminProfile = () => {
 
   const fetchUserData = async (userId, authToken) => {
     try {
-      const response = await axios.get(`/user-api/user/${userId}`, {
+      const response = await apiInstance.get(`/user-api/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -78,7 +78,7 @@ const AdminProfile = () => {
   const handleSaveProfile = async () => {
     try {
       const authToken = localStorage.getItem("authToken");
-      await axios.patch(
+      await apiInstance.patch(
         `/user-api/user/${userData.id}`,
         {
           phone: formData.phone,
@@ -112,7 +112,7 @@ const AdminProfile = () => {
 
     try {
       const authToken = localStorage.getItem("authToken");
-      await axios.post(
+      await apiInstance.post(
         `/api/Auth/update-password`,
         {
           currentPassword: passwordData.currentPassword,

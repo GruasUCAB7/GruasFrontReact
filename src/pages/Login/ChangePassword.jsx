@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 
 
@@ -24,7 +24,7 @@ const ChangePassword = () => {
         }
 
         try {
-            await axios.post("/api/Auth/change-password", {
+            await apiInstance.post("/api/Auth/change-password", {
                 email: state?.email,
                 oldPassword: state?.temporaryPassword,
                 newPassword,

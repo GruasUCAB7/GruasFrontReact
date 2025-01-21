@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 
 const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
   const [formData, setFormData] = useState({
@@ -23,13 +23,13 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
           return;
         }
 
-        const providerResponse = await axios.get("/provider-api/provider", {
+        const providerResponse = await apiInstance.get("/provider-api/provider", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
 
         const registeredProviderIds = providerResponse.data.map((provider) => provider.id);
 
-        const usersResponse = await axios.get("/user-api/user", {
+        const usersResponse = await apiInstance.get("/user-api/user", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
 
@@ -71,7 +71,7 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
         status: formData.status,
       };
 
-      const response = await axios.post(
+      const response = await apiInstance.post(
         "/provider-api/provider",
         payload,
         {

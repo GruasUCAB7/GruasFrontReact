@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {jwtDecode} from "jwt-decode";
-import axios from "../../axiosInstance";
+import { jwtDecode } from "jwt-decode";
+import apiInstance from "../../services/apiService";
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -9,18 +9,28 @@ const Login = () => {
     const [errorMessage, setErrorMessage] = useState("");
     const navigate = useNavigate();
 
-    const token = localStorage.getItem("authToken");
-    if (token) {
-        const decodedToken = jwtDecode(token);
-        const userId = decodedToken.sub; // Obtén el userId del token
-        localStorage.setItem("userId", userId); // Almacena el userId en localStorage
-    }
+    useEffect(() => {
+        const token = localStorage.getItem("authToken");
+        if (token) {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userId = decodedToken.sub;
+                localStorage.setItem("userId", userId);
+                navigate("/AdminHome");
+            } catch (error) {
+                localStorage.removeItem("authToken");
+                localStorage.removeItem("userId");
+            }
+        }
+    }, [navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
 
+        setErrorMessage("");
+
         try {
-            const response = await axios.post("/api/Auth/login", { email, password });
+            const response = await apiInstance.post("/api/Auth/login", { email, password });
 
             if (response.data.requiresPasswordChange) {
                 const limitedToken = response.data.limitedToken;
@@ -31,13 +41,14 @@ const Login = () => {
                     state: { email, temporaryPassword: password },
                 });
             } else if (response.data.token) {
+
                 localStorage.setItem("authToken", response.data.token);
+
                 navigate("/AdminHome");
             } else {
                 setErrorMessage("No se pudo iniciar sesión. Verifica tus datos.");
             }
         } catch (error) {
-            console.error("Error al iniciar sesión:", error.response?.data || error.message);
             setErrorMessage(
                 error.response?.data?.message || "Email o contraseña incorrectos. Inténtalo nuevamente."
             );

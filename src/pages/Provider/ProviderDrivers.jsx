@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import ProviderAddDriverForm from "../../components/ProviderComponents/ProviderAddDriverForm";
 import ProviderEditDriverForm from "../../components/ProviderComponents/ProviderEdtiDriverForm";
@@ -50,7 +50,7 @@ const ProviderDrivers = () => {
 
   const fetchDrivers = useCallback(async () => {
     try {
-      const response = await axios.get(`/provider-api/provider/${id}`, {
+      const response = await apiInstance.get(`/provider-api/provider/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
@@ -61,7 +61,7 @@ const ProviderDrivers = () => {
       const driverData = await Promise.all(
         response.data.drivers.map(async (driverId) => {
           try {
-            const driverResponse = await axios.get(`/provider-api/driver/${driverId}`, {
+            const driverResponse = await apiInstance.get(`/provider-api/driver/${driverId}`, {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("authToken")}`,
               },
@@ -69,7 +69,7 @@ const ProviderDrivers = () => {
             const driver = driverResponse.data;
 
             if (driver.craneAssigned && !tempCranesMap.has(driver.craneAssigned)) {
-              const craneResponse = await axios.get(`/provider-api/crane/${driver.craneAssigned}`, {
+              const craneResponse = await apiInstance.get(`/provider-api/crane/${driver.craneAssigned}`, {
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem("authToken")}`,
                 },
@@ -112,7 +112,7 @@ const ProviderDrivers = () => {
 
   const handleAddDriver = async (newDriver) => {
 
-    const driverResponse = await axios.get(`/provider-api/driver/${newDriver.id}`, {
+    const driverResponse = await apiInstance.get(`/provider-api/driver/${newDriver.id}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
@@ -138,7 +138,7 @@ const ProviderDrivers = () => {
     );
 
     if (updatedDriver.craneAssigned) {
-      axios
+      apiInstance
         .get(`/provider-api/crane/${updatedDriver.craneAssigned}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,

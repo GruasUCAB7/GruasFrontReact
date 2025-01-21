@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import AdminAddProviderForm from "../../components/AdminComponents/AdminAddProviderForm";
 import AdminEditProviderForm from "../../components/AdminComponents/AdminEditProviderForm";
@@ -44,7 +44,7 @@ const AdminProviders = () => {
 
   const fetchProviders = useCallback(async () => {
     try {
-      const response = await axios.get("/provider-api/provider", {
+      const response = await apiInstance.get("/provider-api/provider", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           "Content-Type": "application/json",
@@ -223,7 +223,7 @@ const AdminProviders = () => {
           <AdminAddProviderForm
             onClose={() => setShowAddForm(false)}
             onSubmitSuccess={() => {
-              handleAddProvider(); // Refrescar la lista de proveedores
+              handleAddProvider();
             }}
           />
         )}

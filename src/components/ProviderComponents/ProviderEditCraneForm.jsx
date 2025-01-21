@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 
 const ProviderEditCraneForm = ({ crane, onClose, onUpdateSuccess }) => {
   const [status, setStatus] = useState(crane.isActive);
@@ -13,7 +13,7 @@ const ProviderEditCraneForm = ({ crane, onClose, onUpdateSuccess }) => {
     setIsLoading(true);
 
     try {
-      const response = await axios.patch(
+      const response = await apiInstance.patch(
         `/provider-api/crane/${crane.id}`,
         { isActive: status },
         {

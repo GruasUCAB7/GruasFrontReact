@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import { useNavigate } from "react-router-dom";
 
@@ -36,7 +36,7 @@ const AdminContracts = () => {
 
   const fetchContracts = useCallback(async () => {
     try {
-      const response = await axios.get("/order-api/contract", {
+      const response = await apiInstance.get("/order-api/contract", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
@@ -50,7 +50,7 @@ const AdminContracts = () => {
           }
 
           try {
-            const vehicleResponse = await axios.get(
+            const vehicleResponse = await apiInstance.get(
               `/order-api/vehicle/${contract.insuredVehicle}`,
               {
                 headers: {

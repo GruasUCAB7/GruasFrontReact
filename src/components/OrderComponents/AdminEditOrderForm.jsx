@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 
 const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
     const [formData, setFormData] = useState({
@@ -39,7 +39,7 @@ const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
 
         const fetchDriversAndContracts = async () => {
             try {
-                const driversResponse = await axios.get("/provider-api/driver", {
+                const driversResponse = await apiInstance.get("/provider-api/driver", {
                     headers: { Authorization: `Bearer ${authToken}` },
                 });
 
@@ -48,7 +48,7 @@ const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
                 const driversWithNames = await Promise.all(
                     activeDrivers.map(async (driver) => {
                         try {
-                            const userResponse = await axios.get(`/user-api/user/${driver.id}`, {
+                            const userResponse = await apiInstance.get(`/user-api/user/${driver.id}`, {
                                 headers: { Authorization: `Bearer ${authToken}` },
                             });
                             return { ...driver, name: userResponse.data.name };
@@ -60,7 +60,7 @@ const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
 
                 setDriversList(driversWithNames);
 
-                const contractsResponse = await axios.get("/order-api/order/contract", {
+                const contractsResponse = await apiInstance.get("/order-api/order/contract", {
                     headers: { Authorization: `Bearer ${authToken}` },
                 });
 
@@ -84,7 +84,7 @@ const AdminEditOrderForm = ({ order, onClose, onSubmitSuccess }) => {
         setErrorMessage("");
 
         try {
-            await axios.patch(`/order-api/order/${order.id}`, formData, {
+            await apiInstance.patch(`/order-api/order/${order.id}`, formData, {
                 headers: {
                     Authorization: `Bearer ${authToken}`,
                 },

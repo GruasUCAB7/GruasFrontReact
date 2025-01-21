@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 
 const AdminAddUserForm = ({ onClose, onAddUser }) => {
   const [formData, setFormData] = useState({
@@ -39,7 +39,7 @@ const AdminAddUserForm = ({ onClose, onAddUser }) => {
     };
 
     try {
-      const response = await axios.post("/user-api/user", payload, {
+      const response = await apiInstance.post("/user-api/user", payload, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },

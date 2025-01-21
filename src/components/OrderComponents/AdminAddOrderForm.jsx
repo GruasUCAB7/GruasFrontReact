@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 
 const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
@@ -28,7 +28,7 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
     useEffect(() => {
         const fetchDriversWithNames = async () => {
             try {
-                const driversResponse = await axios.get("/provider-api/driver", {
+                const driversResponse = await apiInstance.get("/provider-api/driver", {
                     headers: { Authorization: `Bearer ${authToken}` },
                 });
 
@@ -37,7 +37,7 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
                 const driversWithNames = await Promise.all(
                     activeDrivers.map(async (driver) => {
                         try {
-                            const userResponse = await axios.get(`/user-api/user/${driver.id}`, {
+                            const userResponse = await apiInstance.get(`/user-api/user/${driver.id}`, {
                                 headers: { Authorization: `Bearer ${authToken}` },
                             });
                             return { ...driver, name: userResponse.data.name };
@@ -57,7 +57,7 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
 
         const fetchContracts = async () => {
             try {
-                const response = await axios.get("/order-api/contract", {
+                const response = await apiInstance.get("/order-api/contract", {
                     headers: { Authorization: `Bearer ${authToken}` },
                 });
                 setContractsList(response.data);
@@ -115,7 +115,7 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
                 ExtraServicesApplied: [],
             };
 
-            await axios.post("/order-api/order", newOrder, {
+            await apiInstance.post("/order-api/order", newOrder, {
                 headers: { Authorization: `Bearer ${authToken}` },
             });
 

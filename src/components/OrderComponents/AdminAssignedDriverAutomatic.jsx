@@ -14,9 +14,8 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; // Distancia en km
 };
 
-const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
+const AdminAssignedDriverAutomatic = ({ orderId, onClose, onDriverAssigned }) => {
   const [driversList, setDriversList] = useState([]);
-  const [selectedDriver, setSelectedDriver] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [order, setOrder] = useState(null);
@@ -90,7 +89,7 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
               // First, by distance (ETA)
               if (a.distance < b.distance) return -1;
               if (a.distance > b.distance) return 1;
-              
+
               // Then, by provider type (internal first)
               if (a.providerType === "Interno" && b.providerType !== "Interno") return -1;
               if (a.providerType !== "Interno" && b.providerType === "Interno") return 1;
@@ -111,25 +110,29 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
   }, [authToken, orderId, order]);
 
   const handleAssignDriver = async () => {
-    if (!selectedDriver) {
-      setErrorMessage("Por favor, selecciona un conductor.");
-      return;
-    }
-
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      // Assign the driver to the order
+      // Check if there are available drivers
+      if (driversList.length === 0) {
+        setErrorMessage("No hay conductores disponibles.");
+        return;
+      }
+
+      // Get the first available driver
+      const firstDriver = driversList[0];
+      
+      // Assign the first driver to the order
       await apiInstance.put(
         `/order-api/order/${orderId}/updateDriverAssigned`,
-        { driverAssigned: selectedDriver },
+        { driverAssigned: firstDriver.id },
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
 
       // Update the driver's availability
       await apiInstance.patch(
-        `/provider-api/driver/${selectedDriver}`,
+        `/provider-api/driver/${firstDriver.id}`,
         { isAvailable: false },
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
@@ -137,8 +140,8 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
       onDriverAssigned();
       onClose();
     } catch (error) {
-      console.error("Error al asignar conductor:", error);
-      setErrorMessage("Error al asignar el conductor. Intenta nuevamente.");
+      console.error("Error al asignar conductor automáticamente:", error);
+      setErrorMessage("Error al asignar el conductor automáticamente.");
     } finally {
       setIsLoading(false);
     }
@@ -147,31 +150,13 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-lg">
-        <h2 className="text-2xl font-bold mb-4">Asignar Conductor</h2>
+        <h2 className="text-2xl font-bold mb-4">Asignar Conductor Automáticamente</h2>
 
         {errorMessage && (
           <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
             {errorMessage}
           </div>
         )}
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Selecciona un conductor disponible:
-          </label>
-          <select
-            className="w-full p-2 border rounded-md"
-            value={selectedDriver}
-            onChange={(e) => setSelectedDriver(e.target.value)}
-          >
-            <option value="">Seleccionar Conductor</option>
-            {driversList.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {`${driver.name} (${driver.dni}) - ${driver.providerType} - ${driver.distance.toFixed(2)} km`}
-              </option>
-            ))}
-          </select>
-        </div>
 
         <div className="flex justify-end mt-6 space-x-4">
           <button
@@ -187,7 +172,7 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
             disabled={isLoading}
             className="px-4 py-2 bg-[#00684aff] text-white rounded-md hover:bg-[#07835fff] transition"
           >
-            {isLoading ? "Asignando..." : "Asignar"}
+            {isLoading ? "Asignando..." : "Asignar Automáticamente"}
           </button>
         </div>
       </div>
@@ -195,4 +180,4 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
   );
 };
 
-export default AdminAssignedDriver;
+export default AdminAssignedDriverAutomatic;
