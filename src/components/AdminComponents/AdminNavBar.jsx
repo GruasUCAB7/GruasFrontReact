@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../index.css";
-import LogoGruasUcab from "../../static/img/LogoGruasUcab.jpg";
+import LogoGruasUcab from "../../static/img/LogoGruasUcab.png";
 import LogoutPrompt from "../LogOutComponent/LogOutPrompt";
 
 const AdminNavbar = ({ userRole }) => {
@@ -96,7 +96,7 @@ const AdminNavbar = ({ userRole }) => {
           <img
             src={LogoGruasUcab}
             alt="Logo Gruas"
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full"
+            className="w-16 h-16 sm:w-20 sm:h-20"
           />
           <span className="text-white text-lg sm:text-xl font-bold">
             GruasUCAB

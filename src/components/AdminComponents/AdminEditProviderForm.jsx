@@ -1,101 +1,63 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import apiInstance from "../../services/apiService";
+import NotificationCard from "../Notification/NotificationCard";
 
-const AdminEditProviderForm = ({ provider, onClose, onSubmit, setErrorMessage }) => {
+const AdminEditProviderForm = ({ provider, onClose, onSubmit, onUpdateSuccess }) => {
   const [formData, setFormData] = useState({
     id: provider?.id || null,
     rif: provider?.rif || "",
     providerType: provider?.providerType || "Interno",
     isActive: provider?.isActive || false,
-    fleetOfCranes: provider?.fleetOfCranes || [],
-    drivers: provider?.drivers || [],
-    newCranes: [],
-    newDrivers: [],
   });
 
-  const [availableCranes, setAvailableCranes] = useState([]);
-  const [availableDrivers, setAvailableDrivers] = useState([]);
-  const [selectedCrane, setSelectedCrane] = useState("");
-  const [selectedDriver, setSelectedDriver] = useState("");
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
 
-  useEffect(() => {
-    const fetchCranesAndDrivers = async () => {
-      const cranesResponse = await apiInstance.get("/provider-api/crane");
-      setAvailableCranes(cranesResponse.data);
-      const driversResponse = await apiInstance.get("/provider-api/driver");
-      setAvailableDrivers(driversResponse.data);
-    };
-
-    fetchCranesAndDrivers();
-  }, []);
-
-  const handleAddCrane = () => {
-    if (
-      selectedCrane &&
-      !formData.newCranes.includes(selectedCrane) &&
-      !formData.fleetOfCranes.includes(selectedCrane)
-    ) {
-      setFormData({
-        ...formData,
-        newCranes: [...formData.newCranes, selectedCrane],
-      });
-      setSelectedCrane("");
-    }
-  };
-
-  const handleRemoveCrane = (craneId) => {
-    setFormData({
-      ...formData,
-      newCranes: formData.newCranes.filter((id) => id !== craneId),
-    });
-  };
-
-  const handleAddDriver = () => {
-    if (
-      selectedDriver &&
-      !formData.newDrivers.includes(selectedDriver) &&
-      !formData.drivers.includes(selectedDriver)
-    ) {
-      setFormData({
-        ...formData,
-        newDrivers: [...formData.newDrivers, selectedDriver],
-      });
-      setSelectedDriver("");
-    }
-  };
-
-  const handleRemoveDriver = (driverId) => {
-    setFormData({
-      ...formData,
-      newDrivers: formData.newDrivers.filter((id) => id !== driverId),
-    });
+  const showNotification = (message, type = "info") => {
+    setNotification({ visible: true, message, type });
+    setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const updatedData = {
-      fleetOfCranes: formData.newCranes,
-      drivers: formData.newDrivers,
       isActive: formData.isActive,
     };
 
     try {
-      await onSubmit(formData.id, updatedData);
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        showNotification("Error de autenticación. Por favor, inicia sesión nuevamente.", "error");
+        return;
+      }
+
+      await apiInstance.patch(`/provider-api/provider/${formData.id}`, updatedData, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      showNotification("Proveedor actualizado exitosamente.", "success");
+      onUpdateSuccess();
       onClose();
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Ocurrió un error al actualizar el proveedor.";
-      setErrorMessage(errorMessage);
+      const errorMessage =
+        error.response?.data?.message || "Ocurrió un error al actualizar el proveedor.";
+      showNotification(errorMessage, "error");
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-screen flex flex-col">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md relative">
         <div className="px-6 py-4 border-b">
           <h2 className="text-2xl font-bold text-gray-800">Editar Proveedor</h2>
         </div>
-        <div className="flex-1 px-6 py-4 overflow-y-auto">
+        <div className="px-6 py-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-gray-700 font-medium">RIF</label>
@@ -116,122 +78,17 @@ const AdminEditProviderForm = ({ provider, onClose, onSubmit, setErrorMessage })
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium">Grúas Asignadas</label>
-              <div className="space-y-2">
-                {formData.fleetOfCranes.length > 0 ? (
-                  formData.fleetOfCranes.map((craneId) => {
-                    const crane = availableCranes.find((c) => c.id === craneId);
-                    return (
-                      <div key={craneId} className="p-2 bg-gray-100 rounded-md shadow-sm">
-                        {crane ? `${crane.plate} - ${crane.brand} ${crane.model}` : craneId}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-gray-500">No hay grúas registradas para este proveedor.</div>
-                )}
-              </div>
-              <label className="block text-gray-700 font-medium mt-4">Grúas Seleccionadas</label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.newCranes.map((craneId) => {
-                  const crane = availableCranes.find((c) => c.id === craneId);
-                  return (
-                    <span
-                      key={craneId}
-                      className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full flex items-center gap-2"
-                    >
-                      {crane ? `${crane.plate} - ${crane.brand}` : craneId}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveCrane(craneId)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        &times;
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <select
-                  value={selectedCrane}
-                  onChange={(e) => setSelectedCrane(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Selecciona una grúa</option>
-                  {availableCranes.map((crane) => (
-                    <option key={crane.id} value={crane.id}>
-                      {crane.plate} - {crane.brand} {crane.model}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={handleAddCrane}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
-                >
-                  Agregar
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium">Conductores Asignados</label>
-              <div className="space-y-2">
-                {formData.drivers.length > 0 ? (
-                  formData.drivers.map((driverId) => {
-                    const driver = availableDrivers.find((d) => d.id === driverId);
-                    return (
-                      <div key={driverId} className="p-2 bg-gray-100 rounded-md shadow-sm">
-                        {driver ? driver.dni : driverId}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-gray-500">No hay conductores registrados para este proveedor.</div>
-                )}
-              </div>
-              <label className="block text-gray-700 font-medium mt-4">Conductores Seleccionados</label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.newDrivers.map((driverId) => {
-                  const driver = availableDrivers.find((d) => d.id === driverId);
-                  return (
-                    <span
-                      key={driverId}
-                      className="bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-2"
-                    >
-                      {driver ? driver.dni : driverId}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDriver(driverId)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        &times;
-                      </button>
-                    </span>
-                  );
-                })}
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <select
-                  value={selectedDriver}
-                  onChange={(e) => setSelectedDriver(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Selecciona un conductor</option>
-                  {availableDrivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.dni}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={handleAddDriver}
-                  className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
-                >
-                  Agregar
-                </button>
-              </div>
+              <label className="block text-gray-700 font-medium">Estado</label>
+              <select
+                value={formData.isActive}
+                onChange={(e) =>
+                  setFormData({ ...formData, isActive: e.target.value === "true" })
+                }
+                className="w-full p-2 border rounded-md"
+              >
+                <option value={true}>Activo</option>
+                <option value={false}>Inactivo</option>
+              </select>
             </div>
             <div className="flex justify-end gap-4">
               <button
@@ -250,6 +107,13 @@ const AdminEditProviderForm = ({ provider, onClose, onSubmit, setErrorMessage })
             </div>
           </form>
         </div>
+        {notification.visible && (
+          <NotificationCard
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification({ ...notification, visible: false })}
+          />
+        )}
       </div>
     </div>
   );

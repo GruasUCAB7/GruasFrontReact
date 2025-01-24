@@ -4,6 +4,7 @@ import apiInstance from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import AdminAddProviderForm from "../../components/AdminComponents/AdminAddProviderForm";
 import AdminEditProviderForm from "../../components/AdminComponents/AdminEditProviderForm";
+import NotificationCard from "../../components/Notification/NotificationCard";
 
 const AdminProviders = () => {
   const [providers, setProviders] = useState([]);
@@ -14,10 +15,18 @@ const AdminProviders = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [userRole, setUserRole] = useState(null);
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
   const navigate = useNavigate();
+
+  const showNotification = (message, type = "info") => {
+    setNotification({ visible: true, message, type });
+    setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
+  };
 
   useEffect(() => {
     const authToken = localStorage.getItem("authToken");
@@ -33,11 +42,9 @@ const AdminProviders = () => {
       setUserRole(role);
 
       if (!["Admin", "Operator", "Provider"].includes(role)) {
-        console.error("Acceso denegado: Rol no autorizado.");
         navigate("/login");
       }
     } catch (error) {
-      console.error("Error al decodificar el token:", error);
       navigate("/login");
     }
   }, [navigate]);
@@ -61,7 +68,7 @@ const AdminProviders = () => {
       setProviders(formattedProviders);
       setLoading(false);
     } catch (error) {
-      setErrorMessage("Error al cargar la lista de proveedores. Intenta nuevamente.");
+      showNotification("Error al cargar la lista de proveedores. Intenta nuevamente.", "error");
       setLoading(false);
     }
   }, []);
@@ -73,20 +80,23 @@ const AdminProviders = () => {
   const handleAddProvider = async () => {
     try {
       await fetchProviders();
-      setSuccessMessage("¡Proveedor agregado exitosamente!");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      showNotification("¡Proveedor agregado exitosamente!", "success");
     } catch (error) {
-      console.error("Error al agregar proveedor:", error.message);
+      showNotification("Error al agregar proveedor. Intenta nuevamente.", "error");
     }
   };
 
-  const handleEditProvider = async () => {
+  const handleEditProvider = async (id, updatedData) => {
     try {
+      await apiInstance.patch(`/provider-api/provider/${id}`, updatedData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
       await fetchProviders();
-      setSuccessMessage("¡Proveedor actualizado exitosamente!");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      showNotification("¡Proveedor actualizado exitosamente!", "success");
     } catch (error) {
-      console.error("Error al editar proveedor:", error.message);
+      showNotification("Error al editar proveedor. Intenta nuevamente.", "error");
     }
   };
 
@@ -125,18 +135,6 @@ const AdminProviders = () => {
             Consulta y administra los proveedores registrados.
           </p>
         </div>
-
-        {successMessage && (
-          <div className="mb-4 text-sm text-green-600 bg-green-100 p-3 rounded-md animate-bounce">
-            {successMessage}
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
-            {errorMessage}
-          </div>
-        )}
 
         <div className="mb-6 flex flex-wrap gap-4">
           <input
@@ -212,6 +210,12 @@ const AdminProviders = () => {
                     >
                       Editar
                     </button>
+                    <button
+                      onClick={() => navigate(`/AdminProviders/${provider.id}`)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+                    >
+                      Ver detalle
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -232,7 +236,16 @@ const AdminProviders = () => {
             provider={selectedProvider}
             onClose={() => setShowEditForm(false)}
             onSubmit={handleEditProvider}
-            setErrorMessage={setErrorMessage}
+            onUpdateSuccess={fetchProviders}
+            setErrorMessage={(message) => showNotification(message, "error")}
+          />
+        )}
+        {/* Componente de notificaciones */}
+        {notification.visible && (
+          <NotificationCard
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification({ ...notification, visible: false })}
           />
         )}
       </div>

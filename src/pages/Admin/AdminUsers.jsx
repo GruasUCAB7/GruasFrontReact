@@ -4,7 +4,7 @@ import axios from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import AdminAddUserForm from "../../components/AdminComponents/AdminAddUserForm";
 import AdminUpdateUserForm from "../../components/AdminComponents/AdminUpdateUserForm";
-
+import NotificationCard from "../../components/Notification/NotificationCard";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -17,7 +17,13 @@ const AdminUsers = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [userRole, setUserRole] = useState(null);
+  const [notification, setNotification] = useState({ visible: false, message: "", type: "info" });
   const navigate = useNavigate();
+
+  const showNotification = (message, type = "info") => {
+    setNotification({ visible: true, message, type });
+    setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
+  };
 
   useEffect(() => {
     const authToken = localStorage.getItem("authToken");
@@ -33,11 +39,9 @@ const AdminUsers = () => {
       setUserRole(role);
 
       if (role !== "Admin" && role !== "Operator") {
-        console.error("Acceso denegado: Rol no autorizado.");
         navigate("/login");
       }
     } catch (error) {
-      console.error("Error al decodificar el token:", error);
       navigate("/login");
     }
   }, [navigate]);
@@ -49,6 +53,7 @@ const AdminUsers = () => {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
       });
+      console.log(response);
       const formattedUsers = response.data.map((user) => ({
         id: user.id,
         name: user.name,
@@ -62,7 +67,7 @@ const AdminUsers = () => {
       setUsers(formattedUsers);
       setLoading(false);
     } catch (error) {
-      setErrorMessage("Error al cargar la lista de usuarios. Intenta nuevamente.");
+      showNotification("Error al cargar la lista de usuarios. Intenta nuevamente.", "error");
       setLoading(false);
     }
   }, []);
@@ -74,13 +79,9 @@ const AdminUsers = () => {
   const handleAddUser = async () => {
     try {
       await fetchUsers();
-      setSuccessMessage("¡Usuario agregado exitosamente!");
-
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
+      showNotification("¡Usuario agregado exitosamente!", "success");
     } catch (error) {
-      console.error("Error al actualizar la lista de usuarios:", error.message);
+      showNotification("Error al actualizar la lista de usuarios:", "error");
     }
   };
 
@@ -91,14 +92,9 @@ const AdminUsers = () => {
           user.id === updatedUser.id ? { ...user, ...updatedUser } : user
         )
       );
-      setSuccessMessage("¡Usuario actualizado exitosamente!");
-
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
+      showNotification("¡Usuario actualizado exitosamente!", "success");
     } catch (error) {
-      console.error("Error al actualizar usuario:", error.message);
-      setErrorMessage("Error al actualizar el usuario. Intenta nuevamente.");
+      showNotification("Error al actualizar el usuario. Intenta nuevamente.", "error");
     }
   };
 
@@ -132,18 +128,6 @@ const AdminUsers = () => {
             Consulta y administra los usuarios registrados.
           </p>
         </div>
-
-        {successMessage && (
-          <div className="mb-4 text-sm text-green-600 bg-green-100 p-3 rounded-md animate-bounce">
-            {successMessage}
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
-            {errorMessage}
-          </div>
-        )}
 
         <div className="mb-6 flex flex-wrap gap-4">
           <input
@@ -230,20 +214,28 @@ const AdminUsers = () => {
             </tbody>
           </table>
         </div>
-
+        {/* Agregar Usuario */}
         {showAddForm && (
           <AdminAddUserForm
             onClose={() => setShowAddForm(false)}
             onAddUser={handleAddUser}
           />
         )}
-
+        {/* Actualizar Usuario */}
         {showUpdateForm && selectedUser && (
           <AdminUpdateUserForm
             user={selectedUser}
             onClose={() => setShowUpdateForm(false)}
             onUpdateSuccess={handleUpdateUser}
             onError={(error) => setErrorMessage(error)}
+          />
+        )}
+        {/* Mostrar Notificaciones */}
+        {notification.visible && (
+          <NotificationCard
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification({ ...notification, visible: false })}
           />
         )}
       </div>

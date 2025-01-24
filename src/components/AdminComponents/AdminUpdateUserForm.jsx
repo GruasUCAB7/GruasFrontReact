@@ -1,54 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import apiInstance from "../../services/apiService";
 
 const AdminUpdateUserForm = ({ user, onClose, onUpdateSuccess, onError }) => {
   const [phone, setPhone] = useState(user.phone || "");
-  const [status, setStatus] = useState(user.status === "Activo");
+  const [status, setStatus] = useState(user.isActive ? "Activo" : "Inactivo");
   const [department, setDepartment] = useState(user.department || "");
-  const [passwordExpirationDate, setPasswordExpirationDate] = useState(
-    user.passwordExpirationDate
-      ? new Date(user.passwordExpirationDate).toISOString().split("T")[0]
-      : ""
-  );
+  const [passwordExpirationDate, setPasswordExpirationDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const authToken = localStorage.getItem("authToken");
 
+  useEffect(() => {
+    if (user.passwordExpirationDate) {
+      const formattedDate = new Date(user.passwordExpirationDate).toISOString().split("T")[0];
+      setPasswordExpirationDate(formattedDate);
+    }
+  }, [user.passwordExpirationDate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-  
+
     if (!authToken) {
       onError("No se encontró un token de autorización. Inicia sesión nuevamente.");
       setIsLoading(false);
       return;
     }
-  
+
     try {
       const updatedUser = {
         phone: phone.trim(),
-        isActive: status,
+        isActive: status === "Activo",
         department: department.trim(),
         passwordExpirationDate: passwordExpirationDate
           ? new Date(passwordExpirationDate).toISOString()
           : null,
       };
-  
-      await apiInstance.patch(
-        `/user-api/user/${user.id}`,
-        updatedUser,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-  
+
+      await apiInstance.patch(`/user-api/user/${user.id}`, updatedUser, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
       onUpdateSuccess({
         ...user,
         phone,
-        status: status ? "Activo" : "Inactivo",
+        status,
         department,
         passwordExpirationDate,
       });
@@ -88,11 +87,11 @@ const AdminUpdateUserForm = ({ user, onClose, onUpdateSuccess, onError }) => {
             <label className="block text-gray-700 font-medium">Estado</label>
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value === "true")}
+              onChange={(e) => setStatus(e.target.value)}
               className="w-full p-2 border rounded-md"
             >
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
             </select>
           </div>
 
@@ -117,6 +116,11 @@ const AdminUpdateUserForm = ({ user, onClose, onUpdateSuccess, onError }) => {
               onChange={(e) => setPasswordExpirationDate(e.target.value)}
               className="w-full p-2 border rounded-md"
             />
+            {passwordExpirationDate && (
+              <p className="text-sm text-gray-500 mt-1">
+                Fecha actual: {new Date(passwordExpirationDate).toLocaleDateString("es-VE")}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end space-x-4">

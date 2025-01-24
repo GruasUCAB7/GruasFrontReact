@@ -11,10 +11,8 @@ import AdminCranes from "./pages/Admin/AdminCranes";
 import AdminContracts from "./pages/Admin/AdminContracts";
 import AdminProfile from "./pages/Admin/AdminProfile";
 //import AdminContractDetail from "./components/AdminComponents/AdminContractDetail";
-//import AdminProvidersDetail from "./components/AdminComponents/AdminProviderDetail";
+import AdminProvidersDetail from "./components/AdminComponents/AdminProviderDetail";
 import AdminNavbar from "./components/AdminComponents/AdminNavBar";
-
-//Providers
 import ProviderCranes from "./pages/Provider/ProviderCranes";
 import ProviderDrivers from "./pages/Provider/ProviderDrivers";
 
@@ -165,6 +163,16 @@ const App = () => {
           }
         />
         <Route
+          path="/AdminProviders/:id"
+          element={
+            <PrivateRoute allowedRoles={["Admin", "Operator", "Provider"]}>
+              <AdminLayout userRole={userRole}>
+                <AdminProvidersDetail userRole={userRole} />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/ProviderCranes/:id"
           element={
             <PrivateRoute allowedRoles={["Provider"]}>
@@ -184,7 +192,6 @@ const App = () => {
             </PrivateRoute>
           }
         />
-
       </Routes>
     </Router>
   );

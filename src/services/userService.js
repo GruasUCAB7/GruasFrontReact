@@ -1,7 +1,6 @@
 import apiInstance from "./apiService";
 
 export const fetchUserName = async (userId) => {
-  if (!userId || userId === "No asignado") return "No asignado";
   try {
     const response = await apiInstance.get(`/user-api/user/${userId}`, {
       headers: {

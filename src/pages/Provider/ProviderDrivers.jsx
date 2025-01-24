@@ -5,14 +5,18 @@ import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import ProviderAddDriverForm from "../../components/ProviderComponents/ProviderAddDriverForm";
 import ProviderEditDriverForm from "../../components/ProviderComponents/ProviderEdtiDriverForm";
 import DriverDocumentGallery from "../../components/ProviderComponents/DriverDocumentGallery";
+import NotificationCard from "../../components/Notification/NotificationCard";
 
 const ProviderDrivers = () => {
   const { id } = useParams();
   const [drivers, setDrivers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -21,8 +25,12 @@ const ProviderDrivers = () => {
   const [cranesMap, setCranesMap] = useState(new Map());
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [selectedDocuments, setSelectedDocuments] = useState([]);
-
   const navigate = useNavigate();
+
+  const showNotification = (message, type = "info") => {
+    setNotification({ visible: true, message, type });
+    setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
+  };
 
   useEffect(() => {
     const authToken = localStorage.getItem("authToken");
@@ -50,6 +58,7 @@ const ProviderDrivers = () => {
 
   const fetchDrivers = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await apiInstance.get(`/provider-api/provider/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
@@ -79,6 +88,7 @@ const ProviderDrivers = () => {
 
             return driver;
           } catch (error) {
+            console.error(`Error al obtener datos del conductor con ID ${driverId}:`, error);
             return null;
           }
         })
@@ -93,9 +103,11 @@ const ProviderDrivers = () => {
 
       setDrivers(uniqueDrivers);
       setCranesMap(tempCranesMap);
-      setLoading(false);
+      showNotification("Conductores cargados exitosamente.", "success");
     } catch (error) {
-      setErrorMessage("Error al cargar los conductores. Intenta nuevamente.");
+      console.error("Error al cargar los conductores:", error);
+      showNotification("Error al cargar los conductores. Intenta nuevamente.", "error");
+    } finally {
       setLoading(false);
     }
   }, [id]);
@@ -111,45 +123,50 @@ const ProviderDrivers = () => {
   }, [fetchDrivers]);
 
   const handleAddDriver = async (newDriver) => {
+    try {
+      const driverResponse = await apiInstance.get(`/provider-api/driver/${newDriver.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
+      const completeDriver = driverResponse.data;
 
-    const driverResponse = await apiInstance.get(`/provider-api/driver/${newDriver.id}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
-    });
-    const completeDriver = driverResponse.data;
+      setDrivers((prevDrivers) => {
+        if (!prevDrivers.some((driver) => driver.id === completeDriver.id)) {
+          return [...prevDrivers, completeDriver];
+        }
+        return prevDrivers;
+      });
 
-    setDrivers((prevDrivers) => {
-      if (!prevDrivers.some((driver) => driver.id === completeDriver.id)) {
-        return [...prevDrivers, completeDriver];
-      }
-      return prevDrivers;
-    });
-
-    setSuccessMessage("¡Conductor agregado exitosamente!");
-    setTimeout(() => setSuccessMessage(""), 3000);
+      showNotification("¡Conductor agregado exitosamente!", "success");
+    } catch (error) {
+      console.error("Error al agregar el conductor:", error);
+      showNotification("Error al agregar el conductor. Intenta nuevamente.", "error");
+    }
   };
 
-  const handleUpdateDriver = (updatedDriver) => {
-    setDrivers((prevDrivers) =>
-      prevDrivers.map((driver) =>
-        driver.id === updatedDriver.id ? { ...driver, ...updatedDriver } : driver
-      )
-    );
+  const handleUpdateDriver = async (updatedDriver) => {
+    try {
+      setDrivers((prevDrivers) =>
+        prevDrivers.map((driver) =>
+          driver.id === updatedDriver.id ? { ...driver, ...updatedDriver } : driver
+        )
+      );
 
-    if (updatedDriver.craneAssigned) {
-      apiInstance
-        .get(`/provider-api/crane/${updatedDriver.craneAssigned}`, {
+      if (updatedDriver.craneAssigned) {
+        const craneResponse = await apiInstance.get(`/provider-api/crane/${updatedDriver.craneAssigned}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
-        })
-        .then((response) => {
-          setCranesMap((prevMap) => new Map(prevMap).set(updatedDriver.craneAssigned, response.data));
         });
+        setCranesMap((prevMap) => new Map(prevMap).set(updatedDriver.craneAssigned, craneResponse.data));
+      }
+
+      showNotification("¡Conductor actualizado exitosamente!", "success");
+    } catch (error) {
+      console.error("Error al actualizar el conductor:", error);
+      showNotification("Error al actualizar el conductor. Intenta nuevamente.", "error");
     }
-    setSuccessMessage("¡Conductor actualizado exitosamente!");
-    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   const filteredDrivers = drivers.filter((driver) => {
@@ -174,27 +191,18 @@ const ProviderDrivers = () => {
     );
   }
 
-  if (errorMessage) {
-    return (
-      <div>
-        <AdminNavbar userRole={userRole} />
-        <div className="flex items-center justify-center h-screen bg-gray-100">
-          <h1 className="text-2xl font-bold text-red-600">{errorMessage}</h1>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex">
       <AdminNavbar userRole={userRole} />
       <div className="flex-1 ml-30 p-8 bg-gray-100 overflow-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">Conductores del Proveedor</h1>
-        
-        {successMessage && (
-          <div className="mb-4 text-sm text-green-600 bg-green-100 p-3 rounded-md animate-bounce">
-            {successMessage}
-          </div>
+
+        {notification.visible && (
+          <NotificationCard
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification({ ...notification, visible: false })}
+          />
         )}
 
         <div className="mb-6 flex flex-wrap gap-4">

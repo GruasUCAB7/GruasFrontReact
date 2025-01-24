@@ -1,3 +1,5 @@
+import apiInstance from "./apiService";
+
 export const fetchAddressFromCoordinates = async (latitude, longitude, apiKey) => {
 
   apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;

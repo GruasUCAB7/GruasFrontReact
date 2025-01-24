@@ -14,8 +14,6 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
     dniImage: null,
     roadMedicalCertificateImage: null,
     civilLiabilityImage: null,
-    isActive: true,
-    isAvailable: true,
   });
 
   const [driversList, setDriversList] = useState([]);
@@ -36,63 +34,56 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
           `/provider-api/provider/${providerId}`,
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
-
-        const assignedDriverIds = providerResponse.data.drivers || [];
         const fleetOfCranes = providerResponse.data.fleetOfCranes || [];
+
+        const driversResponse = await apiInstance.get(`/provider-api/driver`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        const assignedCraneIds = new Set(
+          driversResponse.data
+            .filter((driver) => driver.craneAssigned)
+            .map((driver) => driver.craneAssigned)
+        );
+
+        const craneDetails = await Promise.all(
+          fleetOfCranes.map(async (craneId) => {
+            if (!assignedCraneIds.has(craneId)) {
+              try {
+                const craneResponse = await apiInstance.get(`/provider-api/crane/${craneId}`, {
+                  headers: { Authorization: `Bearer ${authToken}` },
+                });
+                return craneResponse.data;
+              } catch (error) {
+                console.error(`Error al obtener la grúa con ID ${craneId}:`, error);
+                return null;
+              }
+            }
+            return null;
+          })
+        );
+
+        const availableCranes = craneDetails.filter((crane) => crane !== null);
+        setCranesList(availableCranes);
 
         const usersResponse = await apiInstance.get("/user-api/user", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
-
         const filteredDrivers = usersResponse.data.filter(
           (user) =>
             user.userType === "Driver" &&
             user.isActive &&
-            !assignedDriverIds.includes(user.id)
+            !providerResponse.data.drivers.includes(user.id)
         );
-
         setDriversList(filteredDrivers);
-
-        const assignedCraneIds = new Set();
-
-        for (const driverId of assignedDriverIds) {
-          const driverResponse = await apiInstance.get(`/provider-api/driver/${driverId}`, {
-            headers: { Authorization: `Bearer ${authToken}` },
-          });
-          if (driverResponse.data.craneAssigned) {
-            assignedCraneIds.add(driverResponse.data.craneAssigned);
-          }
-        }
-
-        const craneDetails = await Promise.all(
-          fleetOfCranes.map(async (craneId) => {
-            try {
-              const craneResponse = await apiInstance.get(`/provider-api/crane/${craneId}`, {
-                headers: { Authorization: `Bearer ${authToken}` },
-              });
-              return craneResponse.data;
-            } catch (error) {
-              return null;
-            }
-          })
-        );
-
-        const availableCranes = Array.from(
-          new Map(
-            craneDetails
-              .filter((crane) => crane && !assignedCraneIds.has(crane.id))
-              .map((crane) => [crane.id, crane])
-          ).values()
-        );
-
-        setCranesList(availableCranes);
       } catch (error) {
+        console.error("Error al cargar los datos:", error);
         setErrorMessage("Error al cargar los datos. Intente nuevamente.");
       }
     };
 
     fetchData();
   }, [authToken, providerId]);
+
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -102,36 +93,46 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
   const handleMapClick = async (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-
+  
     setSelectedLocation({ lat, lng });
-
+  
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
-      const address = data.results[0]?.formatted_address;
-
-      if (address) {
-        setFormData({ ...formData, driverLocation: address });
-      } else {
-        setFormData({ ...formData, driverLocation: "Dirección no disponible" });
-      }
+  
+      const address = data.results[0]?.formatted_address || 
+                      data.plus_code?.compound_code || 
+                      "Dirección no disponible";
+  
+      setFormData({ ...formData, driverLocation: address });
     } catch (error) {
       setFormData({ ...formData, driverLocation: "Dirección no disponible" });
     }
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setErrorMessage("");
-    const formDataToSend = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value) formDataToSend.append(key, value);
-    });
-
+  
     try {
+      const selectedCrane = cranesList.find((crane) => crane.id === formData.craneAssigned);
+      if (!selectedCrane) {
+        throw new Error("La grúa seleccionada no pertenece a las disponibles del proveedor.");
+      }
+  
+      if (!formData.driverLocation || formData.driverLocation === "Dirección no disponible") {
+        throw new Error("Por favor selecciona una ubicación válida en el mapa.");
+      }
+  
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) formDataToSend.append(key, value);
+      });
+  
+      console.log("Payload enviado al backend:", formDataToSend);
+  
       const createDriverResponse = await apiInstance.post(
         "/provider-api/driver",
         formDataToSend,
@@ -142,8 +143,9 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
           },
         }
       );
+  
       const newDriver = createDriverResponse.data;
-
+  
       const updateProviderResponse = await apiInstance.patch(
         `/provider-api/provider/${providerId}`,
         { drivers: [newDriver.id] },
@@ -154,16 +156,28 @@ const ProviderAddDriverForm = ({ onClose, onAddDriver, providerId }) => {
           },
         }
       );
-
+  
       if (updateProviderResponse.status === 200) {
         onAddDriver(newDriver);
+        setFormData({
+          userId: "",
+          dni: "",
+          isActiveLicensed: true,
+          craneAssigned: "",
+          driverLocation: "",
+          licenseImage: null,
+          dniImage: null,
+          roadMedicalCertificateImage: null,
+          civilLiabilityImage: null,
+        });
         onClose();
       } else {
         throw new Error("Error al asignar el conductor al proveedor.");
       }
     } catch (error) {
+      console.error("Error al agregar el conductor:", error);
       setErrorMessage(
-        error.response?.data?.message || "Error desconocido al guardar el conductor."
+        error.message || "Error desconocido al guardar el conductor."
       );
     } finally {
       setIsLoading(false);

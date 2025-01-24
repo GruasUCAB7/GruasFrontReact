@@ -6,10 +6,8 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
     const [formData, setFormData] = useState({
         incidentType: "",
         incidentDate: "",
-        totalCost: 0,
         incidentAddress: "",
         destinationAddress: "",
-        driverAssigned: "",
         contractClient: "",
     });
     const [driversList, setDriversList] = useState([]);
@@ -108,7 +106,6 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
             const newOrder = {
                 ContractId: formData.contractClient,
                 OperatorId: operatorId,
-                DriverAssigned: formData.driverAssigned || "",
                 IncidentAddress: formData.incidentAddress,
                 DestinationAddress: formData.destinationAddress,
                 IncidentType: formData.incidentType,
@@ -194,18 +191,6 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
                     </div>
 
                     <div>
-                        <label className="block text-gray-700 font-medium">Costo Total</label>
-                        <input
-                            type="number"
-                            name="totalCost"
-                            value={formData.totalCost}
-                            onChange={handleChange}
-                            required
-                            className="w-full p-2 border rounded-md"
-                        />
-                    </div>
-
-                    <div>
                         <label className="block text-gray-700 font-medium">Dirección del Incidente</label>
                         <input
                             type="text"
@@ -260,23 +245,6 @@ const AdminAddOrderForm = ({ operatorId, onClose, onSubmitSuccess }) => {
                             </div>
                         </>
                     )}
-
-                    <div>
-                        <label className="block text-gray-700 font-medium">Conductor Asignado (Opcional)</label>
-                        <select
-                            name="driverAssigned"
-                            value={formData.driverAssigned}
-                            onChange={handleChange}
-                            className="w-full p-2 border rounded-md"
-                        >
-                            <option value="">Por asignar</option>
-                            {driversList.map((driver) => (
-                                <option key={driver.id} value={driver.id}>
-                                    {`${driver.name} (${driver.dni})`}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
 
                     <div className="flex justify-end space-x-4">
                         <button

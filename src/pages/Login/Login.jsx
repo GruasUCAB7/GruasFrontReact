@@ -106,6 +106,7 @@ const Login = () => {
                     </button>
                 </form>
 
+                {/* 
                 <div className="mt-4 text-sm text-center">
                     <p className="text-gray-600">
                         ¿Olvidaste tu contraseña?{" "}
@@ -117,6 +118,7 @@ const Login = () => {
                         </a>
                     </p>
                 </div>
+                */}
             </div>
         </div>
     );

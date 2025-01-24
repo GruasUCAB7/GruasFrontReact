@@ -27,11 +27,6 @@ const AdminDetailView = ({ order, onClose }) => {
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-3xl">
         <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">Detalle de la Orden</h2>
         <div className="space-y-4">
-          {/* ID de la Orden */}
-          <div className="flex justify-between items-center border-b pb-2">
-            <span className="font-semibold text-gray-700">ID de la Orden:</span>
-            <span className="text-gray-600">{order.id}</span>
-          </div>
 
           {/* Cliente del Contrato */}
           <div className="flex justify-between items-center border-b pb-2">
@@ -61,6 +56,12 @@ const AdminDetailView = ({ order, onClose }) => {
           <div className="flex justify-between items-center border-b pb-2">
             <span className="font-semibold text-gray-700">Fecha del Incidente:</span>
             <span className="text-gray-600">{formatDate(order.incidentDate)}</span>
+          </div>
+
+          {/* Costo Total*/}
+          <div className="flex justify-between items-center border-b pb-2">
+            <span className="font-semibold text-gray-700">Costo Total:</span>
+            <span className="text-gray-600">{order.totalCost}</span>
           </div>
         </div>
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import apiInstance from "../../services/apiService";
+import NotificationCard from "../Notification/NotificationCard";
 
 const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
   const [formData, setFormData] = useState({
@@ -12,14 +14,25 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
   const [availableProviders, setAvailableProviders] = useState([]);
   const [loading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
+
+  const showNotification = (message, type = "info") => {
+    setNotification({ visible: true, message, type });
+    setTimeout(() => {
+      setNotification({ ...notification, visible: false });
+    }, 3000);
+  };
 
   useEffect(() => {
     const fetchAvailableProviders = async () => {
       try {
         const authToken = localStorage.getItem("authToken");
         if (!authToken) {
-          setErrorMessage("Error de autenticación. Por favor, inicia sesión nuevamente.");
+          showNotification("Error de autenticación. Por favor, inicia sesión nuevamente.", "error");
           return;
         }
 
@@ -35,15 +48,15 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
 
         const filteredProviders = usersResponse.data.filter(
           (user) =>
-            user.userType === "Provider" &&
-            user.isActive &&
-            !registeredProviderIds.includes(user.id)
+            user.userType === "Provider" && 
+            user.isActive && 
+            !registeredProviderIds.includes(user.id) 
         );
 
         setAvailableProviders(filteredProviders);
         setIsLoading(false);
       } catch (error) {
-        setErrorMessage("Error al cargar los usuarios disponibles. Intenta nuevamente.");
+        showNotification("Error al cargar los usuarios disponibles. Intenta nuevamente.", "error");
         setIsLoading(false);
       }
     };
@@ -54,12 +67,11 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setErrorMessage("");
 
     try {
       const authToken = localStorage.getItem("authToken");
       if (!authToken) {
-        setErrorMessage("Error de autenticación. Por favor, inicia sesión nuevamente.");
+        showNotification("Error de autenticación. Por favor, inicia sesión nuevamente.", "error");
         setIsSubmitting(false);
         return;
       }
@@ -68,7 +80,8 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
         userId: formData.userId,
         rif: formData.rif,
         providerType: formData.providerType,
-        status: formData.status,
+        fleetOfCranes: [],
+        drivers: [],
       };
 
       const response = await apiInstance.post(
@@ -82,13 +95,12 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
       );
 
       if (response.status === 201) {
+        showNotification("¡Proveedor agregado exitosamente!", "success");
         onSubmitSuccess(response.data);
         onClose();
       }
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message || "Error al agregar el proveedor. Intenta nuevamente."
-      );
+      showNotification("Error al agregar el proveedor. Intenta nuevamente.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,11 +120,16 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Agregar Proveedor</h2>
-        {errorMessage && (
-          <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
-            {errorMessage}
-          </div>
+
+        {/* NotificationCard */}
+        {notification.visible && (
+          <NotificationCard
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification({ ...notification, visible: false })}
+          />
         )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-700 font-medium">Usuario</label>
@@ -130,7 +147,6 @@ const AdminAddProviderForm = ({ onClose, onSubmitSuccess }) => {
                 </option>
               ))}
             </select>
-
           </div>
           <div>
             <label className="block text-gray-700 font-medium">RIF</label>

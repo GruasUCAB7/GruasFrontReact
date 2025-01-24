@@ -4,20 +4,29 @@ import apiInstance from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
 import ProviderAddCraneForm from "../../components/ProviderComponents/ProviderAddCraneForm";
 import ProviderEditCraneForm from "../../components/ProviderComponents/ProviderEditCraneForm";
+import NotificationCard from "../../components/Notification/NotificationCard";
 
 const ProviderCranes = () => {
   const { id } = useParams();
   const [cranes, setCranes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-  const [providerErrorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [selectedCrane, setSelectedCrane] = useState(null);
   const navigate = useNavigate();
+
+  const showNotification = (message, type = "info") => {
+    setNotification({ visible: true, message, type });
+    setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
+  };
 
   useEffect(() => {
     const authToken = localStorage.getItem("authToken");
@@ -45,17 +54,23 @@ const ProviderCranes = () => {
 
   const fetchCranes = useCallback(async () => {
     try {
-      console.log(localStorage.getItem("authToken"))
+      setLoading(true);
       const response = await apiInstance.get(`/provider-api/provider/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
       });
 
-      const uniqueCraneIds = [...new Set(response.data.fleetOfCranes)];
+      const { fleetOfCranes } = response.data;
+
+      if (!fleetOfCranes || fleetOfCranes.length === 0) {
+        showNotification("No hay grúas asignadas al proveedor.", "info");
+        setCranes([]);
+        return;
+      }
 
       const craneData = await Promise.all(
-        uniqueCraneIds.map(async (craneId) => {
+        fleetOfCranes.map(async (craneId) => {
           try {
             const craneResponse = await apiInstance.get(`/provider-api/crane/${craneId}`, {
               headers: {
@@ -64,52 +79,55 @@ const ProviderCranes = () => {
             });
             return craneResponse.data;
           } catch (error) {
+            console.error(`Error al obtener datos de la grúa con ID ${craneId}:`, error);
             return null;
           }
         })
       );
 
-      const validCranes = craneData.filter((crane) => crane !== null);
-
-      setCranes([...new Map(validCranes.map((crane) => [crane.id, crane])).values()]);
-      setLoading(false);
+      setCranes(craneData.filter((crane) => crane !== null));
     } catch (error) {
-      setErrorMessage("Error al cargar las grúas. Intenta nuevamente.");
+      console.error("Error al cargar las grúas:", error);
+      showNotification("Error al cargar las grúas. Intenta nuevamente.", "error");
+    } finally {
       setLoading(false);
     }
   }, [id]);
-
 
   useEffect(() => {
     fetchCranes();
   }, [fetchCranes]);
 
   const handleAddCrane = async (newCrane) => {
-    const craneResponse = await apiInstance.get(`/provider-api/crane/${newCrane.id}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
-    });
+    try {
+      const craneResponse = await apiInstance.get(`/provider-api/crane/${newCrane.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
 
-    const completeCrane = craneResponse.data;
+      const completeCrane = craneResponse.data;
 
-    setCranes((prevCranes) => {
-      const updatedCranes = [...prevCranes, completeCrane];
-      return [...new Map(updatedCranes.map(crane => [crane.id, crane])).values()];
-    });
-
-    setSuccessMessage("¡Grúa agregada exitosamente!");
-    setTimeout(() => setSuccessMessage(""), 3000);
+      setCranes((prevCranes) => [...prevCranes, completeCrane]);
+      showNotification("¡Grúa agregada exitosamente!", "success");
+    } catch (error) {
+      console.error("Error al agregar la grúa:", error);
+      showNotification("Error al agregar la grúa. Intenta nuevamente.", "error");
+    }
   };
 
   const handleUpdateCrane = (updatedCrane) => {
-    setCranes((prevCranes) =>
-      prevCranes.map((crane) =>
-        crane.id === updatedCrane.id ? { ...crane, ...updatedCrane } : crane
-      )
-    );
-    setSuccessMessage("¡Grúa actualizada exitosamente!");
-    setTimeout(() => setSuccessMessage(""), 3000);
+    try {
+      setCranes((prevCranes) =>
+        prevCranes.map((crane) =>
+          crane.id === updatedCrane.id ? { ...crane, ...updatedCrane } : crane
+        )
+      );
+      showNotification("¡Grúa actualizada exitosamente!", "success");
+    } catch (error) {
+      console.error("Error al actualizar la grúa:", error);
+      showNotification("Error al actualizar la grúa. Intenta nuevamente.", "error");
+    }
   };
 
   const filteredCranes = cranes.filter((crane) => {
@@ -134,16 +152,6 @@ const ProviderCranes = () => {
       </div>
     );
   }
-  if (providerErrorMessage) {
-    return (
-      <div>
-        <AdminNavbar userRole={userRole} />
-        <div className="flex items-center justify-center h-screen bg-gray-100">
-          <h1 className="text-2xl font-bold text-red-600">{providerErrorMessage}</h1>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex">
@@ -151,10 +159,12 @@ const ProviderCranes = () => {
       <div className="flex-1 ml-30 p-8 bg-gray-100 overflow-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">Grúas del Proveedor</h1>
 
-        {successMessage && (
-          <div className="mb-4 text-sm text-green-600 bg-green-100 p-3 rounded-md animate-bounce">
-            {successMessage}
-          </div>
+        {notification.visible && (
+          <NotificationCard
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification({ ...notification, visible: false })}
+          />
         )}
 
         <div className="mb-6 flex flex-wrap gap-4">

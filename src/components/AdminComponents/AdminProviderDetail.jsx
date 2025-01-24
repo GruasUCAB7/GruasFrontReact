@@ -1,42 +1,54 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "../../axiosInstance";
+import apiInstance from "../../services/apiService";
 import AdminNavbar from "../../components/AdminComponents/AdminNavBar";
+import NotificationCard from "../Notification/NotificationCard";
 
-const AdminProvidersDetail = () => {
+const AdminProvidersDetail = ({ userRole }) => {
   const navigate = useNavigate();
   const { id } = useParams();
 
   const [provider, setProvider] = useState(null);
   const [cranes, setCranes] = useState([]);
   const [drivers, setDrivers] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
+
+  const showNotification = (message, type = "info") => {
+    setNotification({ visible: true, message, type });
+    setTimeout(() => setNotification({ ...notification, visible: false }), 3000);
+  };
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const providerResponse = await axios.get(`/provider-api/provider/${id}`);
+        const providerResponse = await apiInstance.get(`/provider-api/provider/${id}`);
         setProvider(providerResponse.data);
 
-        if (providerResponse.data.fleetOfCranes.length > 0) {
+        if (providerResponse.data.fleetOfCranes?.length > 0) {
           const cranesResponse = await Promise.all(
             providerResponse.data.fleetOfCranes.map((craneId) =>
-              axios.get(`/provider-api/crane/${craneId}`)
+              apiInstance.get(`/provider-api/crane/${craneId}`)
             )
           );
           setCranes(cranesResponse.map((res) => res.data));
         }
 
-        if (providerResponse.data.drivers.length > 0) {
+        if (providerResponse.data.drivers?.length > 0) {
           const driversResponse = await Promise.all(
             providerResponse.data.drivers.map((driverId) =>
-              axios.get(`/provider-api/driver/${driverId}`)
+              apiInstance.get(`/provider-api/driver/${driverId}`)
             )
           );
           setDrivers(driversResponse.map((res) => res.data));
         }
+
+        showNotification("Detalles del proveedor cargados exitosamente.", "success");
       } catch (error) {
-        setErrorMessage("No se pudieron cargar los detalles del proveedor.");
+        showNotification("No se pudieron cargar los detalles del proveedor.", "error");
       }
     };
 
@@ -46,7 +58,7 @@ const AdminProvidersDetail = () => {
   if (!provider) {
     return (
       <div className="flex">
-        <AdminNavbar />
+        <AdminNavbar userRole={userRole} />
         <div className="flex-1 ml-60 p-8 bg-gray-100">
           <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
             <h1 className="text-3xl font-bold text-center">Cargando...</h1>
@@ -58,17 +70,10 @@ const AdminProvidersDetail = () => {
 
   return (
     <div className="flex">
-      <AdminNavbar />
-      <div className="flex-1 ml-60 p-8 bg-gray-100">
+      <AdminNavbar userRole={userRole} />
+      <div className="flex-1 pl-30 p-8 bg-gray-100">
         <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
-          <h1 className="text-3xl font-bold mb-6 text-center">
-            Detalle del Proveedor
-          </h1>
-          {errorMessage && (
-            <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded-md">
-              {errorMessage}
-            </div>
-          )}
+          <h1 className="text-3xl font-bold mb-6 text-center">Detalle del Proveedor</h1>
           <div className="space-y-6">
             <div className="border-b pb-4">
               <h2 className="text-xl font-semibold mb-4 bg-gray-100 p-3 rounded">
@@ -83,9 +88,7 @@ const AdminProvidersDetail = () => {
               <p>
                 <strong>Estado:</strong>{" "}
                 <span
-                  className={
-                    provider.isActive ? "text-green-600" : "text-red-600"
-                  }
+                  className={provider.isActive ? "text-green-600" : "text-red-600"}
                 >
                   {provider.isActive ? "Activo" : "Inactivo"}
                 </span>
@@ -112,14 +115,12 @@ const AdminProvidersDetail = () => {
                       <strong>Modelo:</strong> {crane.model}
                     </p>
                     <p>
-                      <strong>Tipo:</strong> {crane.craneType}
+                      <strong>Tipo:</strong> {crane.craneSize}
                     </p>
                     <p>
                       <strong>Estado:</strong>{" "}
                       <span
-                        className={
-                          crane.isActive ? "text-green-600" : "text-red-600"
-                        }
+                        className={crane.isActive ? "text-green-600" : "text-red-600"}
                       >
                         {crane.isActive ? "Activa" : "Inactiva"}
                       </span>
@@ -145,11 +146,9 @@ const AdminProvidersDetail = () => {
                       <strong>DNI:</strong> {driver.dni}
                     </p>
                     <p>
-                      <strong>Licencia:</strong> {" "}
+                      <strong>Licencia:</strong>{" "}
                       <span
-                        className={
-                          driver.isActiveLicensed ? "text-green-600" : "text-red-600"
-                        }
+                        className={driver.isActiveLicensed ? "text-green-600" : "text-red-600"}
                       >
                         {driver.isActiveLicensed ? "Activo" : "Inactivo"}
                       </span>
@@ -157,9 +156,7 @@ const AdminProvidersDetail = () => {
                     <p>
                       <strong>Estado:</strong>{" "}
                       <span
-                        className={
-                          driver.isActive ? "text-green-600" : "text-red-600"
-                        }
+                        className={driver.isActive ? "text-green-600" : "text-red-600"}
                       >
                         {driver.isActive ? "Activo" : "Inactivo"}
                       </span>
@@ -182,6 +179,13 @@ const AdminProvidersDetail = () => {
           </div>
         </div>
       </div>
+      {notification.visible && (
+        <NotificationCard
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification({ ...notification, visible: false })}
+        />
+      )}
     </div>
   );
 };

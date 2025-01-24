@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from "react";
 import apiInstance from "../../services/apiService";
-
-// Función para calcular la distancia entre dos puntos geográficos (Haversine)
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Radio de la Tierra en km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distancia en km
-};
+import { fetchDriversWithDetailsAndDistances } from "../../services/driverService";
 
 const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
   const [driversList, setDriversList] = useState([]);
@@ -24,91 +12,29 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
   const authToken = localStorage.getItem("authToken");
 
   useEffect(() => {
-    const fetchOrderDetails = async () => {
+    const fetchData = async () => {
       try {
         const orderResponse = await apiInstance.get(`/order-api/order/${orderId}`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
-        setOrder(orderResponse.data);
-      } catch (error) {
-        console.error("Error al cargar los detalles de la orden:", error);
-        setErrorMessage("Error al cargar los detalles de la orden.");
-      }
-    };
 
-    const fetchDriversWithNamesAndDNI = async () => {
-      try {
-        // Fetch all drivers
-        const driversResponse = await apiInstance.get("/provider-api/driver", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-        const availableDrivers = driversResponse.data.filter(
-          (driver) => driver.isAvailable
-        );
+        const orderData = orderResponse.data;
+        setOrder(orderData);
 
-        // Fetch all users
-        const usersResponse = await apiInstance.get("/user-api/user", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-        const users = usersResponse.data;
-
-        // Fetch all providers
-        const providersResponse = await apiInstance.get("/provider-api/provider", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-        const providers = providersResponse.data;
-
-        // Map driver data with user data
-        const driversWithNamesAndDNI = availableDrivers.map((driver) => {
-          const user = users.find((u) => u.id === driver.id); // Match driver.id with user.id
-          const provider = providers.find(
-            (p) => p._id === driver.providerId // Match provider ID
-          );
-
-          return {
-            ...driver,
-            name: user ? user.name : "No disponible", // Name from users
-            dni: driver.dni || "No disponible", // DNI from drivers
-            providerType: provider ? provider.providerType : "Desconocido", // Provider type
-            providerId: provider ? provider._id : null, // Provider ID for filtering
-          };
-        });
-
-        // Filter drivers by proximity (ETA), then by provider type
-        if (order) {
-          // Get the incident's coordinates
-          const { latitude: orderLat, longitude: orderLon } = order.incidentAddress;
-
-          // Sort by ETA (distance) and then by provider type
-          const sortedDrivers = driversWithNamesAndDNI
-            .map((driver) => {
-              const { latitude: driverLat, longitude: driverLon } = driver.driverLocation;
-              const distance = calculateDistance(orderLat, orderLon, driverLat, driverLon);
-              return { ...driver, distance };
-            })
-            .sort((a, b) => {
-              // First, by distance (ETA)
-              if (a.distance < b.distance) return -1;
-              if (a.distance > b.distance) return 1;
-              
-              // Then, by provider type (internal first)
-              if (a.providerType === "Interno" && b.providerType !== "Interno") return -1;
-              if (a.providerType !== "Interno" && b.providerType === "Interno") return 1;
-
-              return 0;
-            });
-
-          setDriversList(sortedDrivers);
+        if (!orderData || !orderData.incidentAddress) {
+          throw new Error("La orden o su dirección de incidente no es válida.");
         }
+
+        const drivers = await fetchDriversWithDetailsAndDistances(orderData, authToken);
+        setDriversList(drivers);
       } catch (error) {
-        console.error("Error al cargar los conductores disponibles:", error);
-        setErrorMessage("Error al cargar los conductores disponibles.");
+        console.error("Error al cargar datos:", error);
+        setErrorMessage(error.message || "Error al cargar los conductores disponibles.");
       }
     };
 
-    fetchOrderDetails();
-    fetchDriversWithNamesAndDNI();
-  }, [authToken, orderId, order]);
+    fetchData();
+  }, [orderId, authToken]);
 
   const handleAssignDriver = async () => {
     if (!selectedDriver) {
@@ -117,17 +43,14 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
     }
 
     setIsLoading(true);
-    setErrorMessage("");
 
     try {
-      // Assign the driver to the order
       await apiInstance.put(
         `/order-api/order/${orderId}/updateDriverAssigned`,
         { driverAssigned: selectedDriver },
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
 
-      // Update the driver's availability
       await apiInstance.patch(
         `/provider-api/driver/${selectedDriver}`,
         { isAvailable: false },
@@ -138,7 +61,7 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
       onClose();
     } catch (error) {
       console.error("Error al asignar conductor:", error);
-      setErrorMessage("Error al asignar el conductor. Intenta nuevamente.");
+      setErrorMessage("Error al asignar conductor.");
     } finally {
       setIsLoading(false);
     }
@@ -167,10 +90,11 @@ const AdminAssignedDriver = ({ orderId, onClose, onDriverAssigned }) => {
             <option value="">Seleccionar Conductor</option>
             {driversList.map((driver) => (
               <option key={driver.id} value={driver.id}>
-                {`${driver.name} (${driver.dni}) - ${driver.providerType} - ${driver.distance.toFixed(2)} km`}
+                {`${driver.name} (${driver.dni}) - ${driver.distance.toFixed(2)} km`}
               </option>
             ))}
           </select>
+
         </div>
 
         <div className="flex justify-end mt-6 space-x-4">
